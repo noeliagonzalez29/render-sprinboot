@@ -20,8 +20,10 @@ import java.util.List;
 public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
 
     private final List<String> rutasPublicas = List.of(
+            "/usuarios/cliente",
+            "/usuarios/trabajador",
+            "/usuarios/trabajador/**",
             "/api/public",
-            "/api/auth/registro",  // Ruta de registro pública
             "/swagger-ui",
             "/v3/api-docs",
             "/swagger-resources",
@@ -65,8 +67,15 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
     }
 
     private boolean esRutaPublica(HttpServletRequest request) {
-        return rutasPublicas.stream()
-                .anyMatch(ruta -> request.getRequestURI().startsWith(ruta));
+        String path = request.getRequestURI();
+        String method = request.getMethod();
+
+        // Permitir rutas públicas por path
+        boolean rutaCoincide = rutasPublicas.stream()
+                .anyMatch(ruta -> path.startsWith(ruta));
+
+
+        return rutaCoincide ;
     }
 
     private void enviarError(HttpServletResponse response, String mensaje) throws IOException {

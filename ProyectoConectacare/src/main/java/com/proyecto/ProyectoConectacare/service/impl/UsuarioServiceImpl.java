@@ -7,6 +7,8 @@ import com.google.cloud.firestore.SetOptions;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Usuario;
 import com.proyecto.ProyectoConectacare.service.UsuarioService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
+    private static final Logger logger = LoggerFactory.getLogger(UsuarioServiceImpl.class);
     private Firestore db;
     private final String COLECCION = "usuarios";
 
@@ -39,31 +42,28 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public Usuario updateUsuario(String id, Map<String, Object> updates) {
         try {
+            logger.debug("Iniciando actualización para el usuario: {}", id);
             DocumentReference docRef = db.collection(COLECCION).document(id);
 
-            // Verificar si el documento existe
+            // Verificar existencia
             DocumentSnapshot snapshot = docRef.get().get();
             if (!snapshot.exists()) {
+                logger.error("Usuario no encontrado: {}", id);
                 throw new PresentationException("Usuario no encontrado", HttpStatus.NOT_FOUND);
             }
 
-            // Logs para depurar
-            System.out.println("Campos recibidos para actualizar: " + updates);
-            System.out.println("Tipo de 'necesidades' en Firestore: " + snapshot.get("necesidades"));
+            logger.debug("Campos a actualizar: {}", updates);
+            docRef.update(updates).get();
+            logger.debug("Campos actualizados correctamente");
 
-            // Actualizar usando set() con merge para evitar problemas con update()
-            docRef.set(updates, SetOptions.merge()).get();
-
-            // Obtener y retornar el usuario actualizado
             DocumentSnapshot updatedSnapshot = docRef.get().get();
             return updatedSnapshot.toObject(Usuario.class);
 
         } catch (InterruptedException | ExecutionException e) {
-            // Imprimir el error real
-            e.printStackTrace();
-            String errorMessage = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            throw new PresentationException("Error en Firestore: " + errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+            logger.error("Error al actualizar usuario: {}", e.getMessage(), e); // <-- Log detallado
+            throw new PresentationException("Error interno", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
     }
 
 

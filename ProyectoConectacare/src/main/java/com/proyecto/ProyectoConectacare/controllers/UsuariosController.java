@@ -54,6 +54,8 @@ public class UsuariosController {
             Usuario usuarioGuardado = usuarioService.createUsuario(usuario);
             return new ResponseEntity<>(usuarioGuardado, HttpStatus.CREATED);
         } catch (FirebaseAuthException e) {
+            System.out.println("🔥 Error Firebase: " + e.getMessage());
+            System.out.println("🔥 Código de error: " + e.getErrorCode());
             if (e.getErrorCode().equals("email-already-exists")) {
                 throw new PresentationException("El email ya está registrado", HttpStatus.BAD_REQUEST);
             }
@@ -107,9 +109,13 @@ public class UsuariosController {
     @PutMapping("/{id}")
     public ResponseEntity<Usuario> actualizarUsuario(
             @PathVariable String id,
-            @RequestBody Map<String, Object> updates,
-            @RequestHeader("Authorization") String token) throws FirebaseAuthException {
+            @RequestBody Map<String, Object> updates, @RequestHeader("Authorization") String token
+            ) throws FirebaseAuthException {
 
+        // Extraer token si contiene "Bearer "
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
         // Validar token y que el usuario actualice solo su perfil
         FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
         if (!decodedToken.getUid().equals(id)) {

@@ -1,6 +1,7 @@
 package com.proyecto.ProyectoConectacare.config;
 
 
+import com.google.cloud.storage.HttpMethod;
 import com.proyecto.ProyectoConectacare.security.FirebaseFiltroAutenticacion;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,8 +42,9 @@ public class SecurityConfig {
 
                 // Autorización de requests
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(String.valueOf(HttpMethod.POST), "/usuarios/cliente").permitAll()
+                        .requestMatchers(String.valueOf(HttpMethod.POST), "/usuarios/trabajador").permitAll()
                         .requestMatchers(
-                                "/api/auth/registro",
                                 "/api/public/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"

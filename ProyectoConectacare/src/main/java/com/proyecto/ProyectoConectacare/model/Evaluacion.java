@@ -1,5 +1,6 @@
 package com.proyecto.ProyectoConectacare.model;
 
+import com.google.cloud.firestore.annotation.ServerTimestamp;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
@@ -15,6 +16,7 @@ public class Evaluacion {
     @Max(value = 5, message = "La calificación no puede ser mayor que 5")
     private int estrellas; // Calificación de 1 a 5
     private String comentario;
+    @ServerTimestamp
     private Date fechaEvaluacion;
 
     public Evaluacion() {
