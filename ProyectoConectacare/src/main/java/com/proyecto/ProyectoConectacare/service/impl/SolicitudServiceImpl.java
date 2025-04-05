@@ -6,7 +6,6 @@ import com.google.cloud.firestore.Firestore;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Solicitud;
 import com.proyecto.ProyectoConectacare.service.SolicitudService;
-import lombok.Data;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +14,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
-@Data
 public class SolicitudServiceImpl implements SolicitudService {
     private static final String COLECCION = "solicitudes";
     private final Firestore db;

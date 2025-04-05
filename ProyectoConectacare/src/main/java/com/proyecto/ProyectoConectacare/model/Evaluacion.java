@@ -2,11 +2,11 @@ package com.proyecto.ProyectoConectacare.model;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import lombok.Data;
+
 
 import java.util.Date;
 
-@Data
+
 public class Evaluacion {
     private String id;
     private String trabajadorId;
@@ -18,5 +18,53 @@ public class Evaluacion {
     private Date fechaEvaluacion;
 
     public Evaluacion() {
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getTrabajadorId() {
+        return trabajadorId;
+    }
+
+    public void setTrabajadorId(String trabajadorId) {
+        this.trabajadorId = trabajadorId;
+    }
+
+    public String getClienteId() {
+        return clienteId;
+    }
+
+    public void setClienteId(String clienteId) {
+        this.clienteId = clienteId;
+    }
+
+    public int getEstrellas() {
+        return estrellas;
+    }
+
+    public void setEstrellas(int estrellas) {
+        this.estrellas = estrellas;
+    }
+
+    public String getComentario() {
+        return comentario;
+    }
+
+    public void setComentario(String comentario) {
+        this.comentario = comentario;
+    }
+
+    public Date getFechaEvaluacion() {
+        return fechaEvaluacion;
+    }
+
+    public void setFechaEvaluacion(Date fechaEvaluacion) {
+        this.fechaEvaluacion = fechaEvaluacion;
     }
 }

@@ -1,6 +1,7 @@
 package com.proyecto.ProyectoConectacare.config;
 
-import com.conectacare.conectaCare.security.FirebaseFiltroAutenticacion;
+
+import com.proyecto.ProyectoConectacare.security.FirebaseFiltroAutenticacion;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;

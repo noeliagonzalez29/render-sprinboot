@@ -20,7 +20,7 @@ public class AnuncioController {
 
     @PostMapping
     public ResponseEntity<Anuncio> crearAnuncio(@RequestBody Anuncio anuncio) {
-        anuncio.setFechaPublicacion(new Date());
+       // anuncio.setFechaPublicacion(new Date()); lo maneja firestore
         return new ResponseEntity<>(anuncioService.createAnuncio(anuncio), HttpStatus.CREATED);
     }
 

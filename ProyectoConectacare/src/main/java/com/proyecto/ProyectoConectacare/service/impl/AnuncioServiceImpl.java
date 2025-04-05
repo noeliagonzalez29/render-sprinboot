@@ -6,7 +6,7 @@ import com.google.cloud.firestore.Firestore;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Anuncio;
 import com.proyecto.ProyectoConectacare.service.AnuncioService;
-import lombok.Data;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
-@Data
 public class AnuncioServiceImpl implements AnuncioService {
     private static final String COLECCION = "anuncios";
     private final Firestore db;
@@ -75,5 +74,11 @@ public class AnuncioServiceImpl implements AnuncioService {
         }
     }
 
-
+    public boolean existeAnuncio(String anuncioId) {
+        try {
+            return db.collection("anuncios").document(anuncioId).get().get().exists();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new PresentationException("Error verificando anuncio", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

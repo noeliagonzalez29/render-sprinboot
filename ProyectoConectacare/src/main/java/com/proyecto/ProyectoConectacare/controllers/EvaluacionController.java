@@ -20,7 +20,7 @@ public class EvaluacionController {
 
     @PostMapping
     public ResponseEntity<Evaluacion> crearEvaluacion(@RequestBody Evaluacion evaluacion) {
-        evaluacion.setFechaEvaluacion(new Date());
+        //evaluacion.setFechaEvaluacion(new Date()); quitado porque tengo anotacion de firestore para que lo maneje
         return new ResponseEntity<>(evaluacionService.createEvaluacion(evaluacion), HttpStatus.CREATED);
     }
 
