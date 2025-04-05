@@ -25,8 +25,8 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
             "/usuarios/trabajador/**",
             "/api/public",
             "/swagger-ui",
-            "/v3/api-docs",
             "/swagger-resources",
+            "/v3/api-docs",
             "/webjars"
     );
 
