@@ -65,7 +65,6 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
             enviarError(response, "Token inválido: " + e.getMessage());
         }
 
-
     }
 
     private String obtenerToken(HttpServletRequest request) {
@@ -84,7 +83,7 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
                 .anyMatch(ruta -> path.startsWith(ruta));
 
 
-        return rutaCoincide ;
+        return rutaCoincide;
     }
 
     private void enviarError(HttpServletResponse response, String mensaje) throws IOException {
