@@ -31,19 +31,21 @@ public class UsuariosController {
 
 
     @PostMapping("/cliente")
-    public ResponseEntity<Usuario> registrarCliente(@Valid @RequestBody ClienteDTO clienteDTO)  {
+    public ResponseEntity<Usuario> registrarCliente(@Valid @RequestBody ClienteDTO clienteDTO,  @RequestHeader("Authorization") String token)  {
 
-        // 1. Crear usuario en Firebase Authentication
-        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                .setEmail(clienteDTO.getEmail())
-                .setPassword(clienteDTO.getPassword());
 
         try {
-            UserRecord userRecord = firebaseAuth.createUser(request);
-            // 2. Crear objeto Usuario para Firestore
+            // 1. Extraer el token y quitar "Bearer " si es necesario.
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            // 2. Verificar el token y extraer el UID.
+            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
+            String uid = decodedToken.getUid();
+            // 3. Crear objeto Usuario para Firestore usando el UID obtenido.
             Usuario usuario = new Usuario();
-            usuario.setId(userRecord.getUid());
-            usuario.setEmail(userRecord.getEmail());
+            usuario.setId(uid);
+            usuario.setEmail(clienteDTO.getEmail()); // Asegúrate de que este email coincida con el registrado en Firebase.
             usuario.setRol(Rol.CLIENTE);
             usuario.setNombre(clienteDTO.getNombre());
             usuario.setApellido(clienteDTO.getApellido());
@@ -64,19 +66,21 @@ public class UsuariosController {
     }
 
     @PostMapping("/trabajador")
-    public ResponseEntity<Usuario> registrarTrabajador(@Valid @RequestBody TrabajadorDTO trabajadorDTO){
-
-        // 1. Crear usuario en Firebase Authentication
-        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-                .setEmail(trabajadorDTO.getEmail())
-                .setPassword(trabajadorDTO.getPassword());
+    public ResponseEntity<Usuario> registrarTrabajador(@Valid @RequestBody TrabajadorDTO trabajadorDTO, @RequestHeader("Authorization") String token){
 
         try {
-            UserRecord userRecord = firebaseAuth.createUser(request);
+            // 1. Extraer el token y quitar "Bearer " si es necesario.
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            // 2. Verificar el token y extraer el UID.
+            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
+            String uid = decodedToken.getUid();
+
             // 2. Crear objeto Usuario para Firestore
             Usuario usuario = new Usuario();
-            usuario.setId(userRecord.getUid());
-            usuario.setEmail(userRecord.getEmail());
+            usuario.setId(uid);
+            usuario.setEmail(trabajadorDTO.getEmail());
             usuario.setRol(Rol.TRABAJADOR);
             usuario.setNombre(trabajadorDTO.getNombre());
             usuario.setApellido(trabajadorDTO.getApellido());

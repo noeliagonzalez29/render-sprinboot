@@ -17,12 +17,14 @@ public class Usuario {
     private String nombre;
 
     private String apellido;
+    @NotEmpty(message = "El telefono no puede estar vacío")
+    private String telefono;
 
     @NotEmpty(message = "El email es obligatorio")
     @Email(message = "El email debe tener un formato válido")
     private String email;
 
-    @NotEmpty(message = "La contraseña es obligatoria")
+
     private String password;
 
     @NotNull(message = "El rol es obligatorio")
@@ -136,6 +138,14 @@ public class Usuario {
 
     public void setApellido(String apellido) {
         this.apellido = apellido;
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
     }
 
     @Override

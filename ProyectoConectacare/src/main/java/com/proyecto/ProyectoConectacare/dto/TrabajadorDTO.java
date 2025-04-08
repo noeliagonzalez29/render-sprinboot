@@ -12,12 +12,22 @@ public class TrabajadorDTO extends RegistroDTO {
     private String nombre;
     private String apellido;
 
+    private String telefono;
+
     private String disponibilidad;
     private List<String> habilidades;
     private String estudios;
     private String experiencia;
 
     public TrabajadorDTO() {
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
     }
 
     public String getNombre() {

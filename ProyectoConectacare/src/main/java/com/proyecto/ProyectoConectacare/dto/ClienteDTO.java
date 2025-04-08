@@ -12,6 +12,7 @@ public class ClienteDTO extends RegistroDTO{
     private String nombre;
     private String apellido;
     private String direccion;
+    private String telefono;
     private List<String> necesidades;
 
     public ClienteDTO() {
@@ -49,5 +50,11 @@ public class ClienteDTO extends RegistroDTO{
         this.necesidades = necesidades;
     }
 
+    public String getTelefono() {
+        return telefono;
+    }
 
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
 }

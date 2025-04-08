@@ -9,8 +9,7 @@ public class RegistroDTO {
     @Email
     private String email;
 
-    @NotBlank(message = "La contraseña es obligatoria")
-    @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
+
     private String password;
 
     public RegistroDTO() {
