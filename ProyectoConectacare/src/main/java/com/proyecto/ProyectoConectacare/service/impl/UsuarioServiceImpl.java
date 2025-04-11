@@ -30,8 +30,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public Usuario createUsuario(Usuario usuario) {
         try {
-            DocumentReference docRef = db.collection(COLECCION).document();
-            usuario.setId(docRef.getId());
+            DocumentReference docRef = db.collection(COLECCION).document(usuario.getId());
             docRef.set(usuario).get();
             return usuario;
         } catch (InterruptedException | ExecutionException e) {

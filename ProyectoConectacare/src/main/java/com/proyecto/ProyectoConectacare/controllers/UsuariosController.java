@@ -88,6 +88,7 @@ public class UsuariosController {
             usuario.setEstudios(trabajadorDTO.getEstudios());
             usuario.setHabilidades(trabajadorDTO.getHabilidades());
 
+            System.out.println("🔐 UID Firebase al registrar: " + usuario.getId());
             // 3. Guardar en Firestore
             Usuario usuarioGuardado = usuarioService.createUsuario(usuario);
             return new ResponseEntity<>(usuarioGuardado, HttpStatus.CREATED);
@@ -135,4 +136,21 @@ public class UsuariosController {
         usuarioService.deleteUsuario(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/yo")
+    public ResponseEntity<Usuario> obtenerMiUsuario(@RequestHeader("Authorization") String token) {
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+        try {
+            FirebaseToken decoded = firebaseAuth.verifyIdToken(token);
+            String uid = decoded.getUid();
+            System.out.println("🔐 UID Firebase al login: " + uid);
+            Usuario usuario = usuarioService.getUsuarioById(uid);
+            return ResponseEntity.ok(usuario);
+        } catch (FirebaseAuthException e) {
+            throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
 }

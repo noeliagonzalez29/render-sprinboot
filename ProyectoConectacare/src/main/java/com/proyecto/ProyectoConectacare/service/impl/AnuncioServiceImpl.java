@@ -24,7 +24,9 @@ public class AnuncioServiceImpl implements AnuncioService {
     }
 
     @Override
-    public Anuncio createAnuncio(Anuncio anuncio) {
+    public Anuncio crearAnuncio(String clienteId, Anuncio anuncio) {
+        anuncio.setClienteId(clienteId); // UID correcto del cliente
+
         try {
             DocumentReference docRef = db.collection(COLECCION).document();
             anuncio.setId(docRef.getId());
@@ -53,7 +55,11 @@ public class AnuncioServiceImpl implements AnuncioService {
         try {
             return db.collection(COLECCION).get().get().getDocuments()
                     .stream()
-                    .map(doc -> doc.toObject(Anuncio.class))
+                    .map(doc -> {
+                        Anuncio anuncio = doc.toObject(Anuncio.class);
+                        anuncio.setId(doc.getId());
+                        return anuncio;
+                    })
                     .collect(Collectors.toList());
         } catch (InterruptedException | ExecutionException e) {
             throw new PresentationException("Error al obtener anuncios", HttpStatus.INTERNAL_SERVER_ERROR);

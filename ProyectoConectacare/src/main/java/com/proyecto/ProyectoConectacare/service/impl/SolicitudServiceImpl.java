@@ -4,6 +4,7 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
+import com.proyecto.ProyectoConectacare.model.EstadoSolicitud;
 import com.proyecto.ProyectoConectacare.model.Solicitud;
 import com.proyecto.ProyectoConectacare.service.SolicitudService;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,9 @@ public class SolicitudServiceImpl implements SolicitudService {
         try {
             DocumentReference docRef = db.collection(COLECCION).document();
             solicitud.setId(docRef.getId());
+            solicitud.setEstado(EstadoSolicitud.PENDIENTE);
+            solicitud.setTrabajadorId(solicitud.getTrabajadorId());
+
             docRef.set(solicitud).get();
             return solicitud;
         } catch (InterruptedException | ExecutionException e) {

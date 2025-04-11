@@ -5,7 +5,7 @@ import com.proyecto.ProyectoConectacare.model.Anuncio;
 import java.util.List;
 
 public interface AnuncioService {
-    Anuncio createAnuncio(Anuncio anuncio);
+    Anuncio crearAnuncio(String clienteId, Anuncio anuncio);
     Anuncio getAnuncioById(String id);
     List<Anuncio> getAllAnuncios();
     List<Anuncio> getAnunciosByClienteId(String clienteId);
