@@ -18,10 +18,17 @@ public class Evaluacion {
     private String comentario;
     @ServerTimestamp
     private Date fechaEvaluacion;
+    private String solicitudId; // Nuevo campo
 
     public Evaluacion() {
     }
+    public String getSolicitudId() {
+        return solicitudId;
+    }
 
+    public void setSolicitudId(String solicitudId) {
+        this.solicitudId = solicitudId;
+    }
     public String getId() {
         return id;
     }

@@ -1,7 +1,13 @@
 package com.proyecto.ProyectoConectacare.controllers;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Evaluacion;
+import com.proyecto.ProyectoConectacare.model.Solicitud;
 import com.proyecto.ProyectoConectacare.service.EvaluacionService;
+import com.proyecto.ProyectoConectacare.service.SolicitudService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,17 +19,44 @@ import java.util.List;
 @RequestMapping("/evaluaciones")
 public class EvaluacionController {
     private final EvaluacionService evaluacionService;
-
-    public EvaluacionController(EvaluacionService evaluacionService) {
+    private final FirebaseAuth firebaseAuth;
+    private final SolicitudService solicitudService;
+    public EvaluacionController(EvaluacionService evaluacionService, FirebaseAuth firebaseAuth, SolicitudService solicitudService) {
         this.evaluacionService = evaluacionService;
+        this.firebaseAuth = firebaseAuth;
+        this.solicitudService = solicitudService;
     }
 
     @PostMapping
-    public ResponseEntity<Evaluacion> crearEvaluacion(@RequestBody Evaluacion evaluacion) {
-        //evaluacion.setFechaEvaluacion(new Date()); quitado porque tengo anotacion de firestore para que lo maneje
+    public ResponseEntity<Evaluacion> crearEvaluacion(
+            @RequestBody Evaluacion evaluacion,
+            @RequestHeader("Authorization") String token) {
+
+        // Verificar autenticación
+        FirebaseToken decodedToken = null;
+        try {
+            decodedToken = firebaseAuth.verifyIdToken(token.replace("Bearer ", ""));
+        } catch (FirebaseAuthException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Obtener la solicitud relacionada
+        Solicitud solicitud = solicitudService.getSolicitudById(evaluacion.getSolicitudId());
+
+        // Validaciones
+        if (!solicitud.getClienteId().equals(decodedToken.getUid())) {
+            throw new PresentationException("No autorizado", HttpStatus.FORBIDDEN);
+        }
+
+        if (!solicitud.isCompletado()) {
+            throw new PresentationException("El trabajo debe estar completado primero", HttpStatus.BAD_REQUEST);
+        }
+
+        evaluacion.setClienteId(decodedToken.getUid());
+        evaluacion.setTrabajadorId(solicitud.getTrabajadorId());
+
         return new ResponseEntity<>(evaluacionService.createEvaluacion(evaluacion), HttpStatus.CREATED);
     }
-
     @GetMapping("/{id}")
     public Evaluacion obtenerEvaluacion(@PathVariable String id) {
         return evaluacionService.getEvaluacionById(id);

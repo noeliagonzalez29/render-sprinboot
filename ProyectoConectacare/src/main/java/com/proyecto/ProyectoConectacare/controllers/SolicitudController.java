@@ -3,7 +3,9 @@ package com.proyecto.ProyectoConectacare.controllers;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.proyecto.ProyectoConectacare.dto.SolicitudConTrabajadorDTO;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
+import com.proyecto.ProyectoConectacare.model.EstadoSolicitud;
 import com.proyecto.ProyectoConectacare.model.Solicitud;
 import com.proyecto.ProyectoConectacare.service.AnuncioService;
 import com.proyecto.ProyectoConectacare.service.SolicitudService;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/solicitudes")
@@ -78,6 +81,50 @@ public class SolicitudController {
 
         } catch (FirebaseAuthException e) {
             throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);
+        }
+    }
+    @GetMapping("/cliente")
+    public List<SolicitudConTrabajadorDTO> obtenerSolicitudesParaMisAnuncios(@RequestHeader("Authorization") String token) {
+        try {
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            FirebaseToken decoded = firebaseAuth.verifyIdToken(token);
+            String uid = decoded.getUid();
+            return solicitudService.getSolicitudesByClienteId(uid);
+        } catch (FirebaseAuthException e) {
+            throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    @PutMapping("/{id}/estado")
+    public ResponseEntity<Solicitud> actualizarEstado(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String estadoStr = body.get("estado");
+        EstadoSolicitud nuevoEstado = EstadoSolicitud.valueOf(estadoStr); // Ej: "ACEPTADA"
+        Solicitud actualizada = solicitudService.actualizarEstadoSolicitud(id, nuevoEstado);
+        return ResponseEntity.ok(actualizada);
+    }
+    @PutMapping("/{id}/completar")
+    public ResponseEntity<Solicitud> marcarComoCompletado(
+            @PathVariable String id,
+            @RequestHeader("Authorization") String token) {
+
+        try {
+            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token.replace("Bearer ", ""));
+            Solicitud solicitud = solicitudService.getSolicitudById(id);
+            // Validación reforzada
+            if (solicitud.getClienteId() == null) {
+                throw new PresentationException("Solicitud no tiene cliente asociado", HttpStatus.BAD_REQUEST);
+            }
+            // Verificar que el cliente es dueño de la solicitud
+            if (!solicitud.getClienteId().equals(decodedToken.getUid())) {
+                throw new PresentationException("No autorizado", HttpStatus.FORBIDDEN);
+            }
+
+            return ResponseEntity.ok(solicitudService.marcarComoCompletado(id));
+
+        } catch (FirebaseAuthException e) {
+            throw new PresentationException("Error de autenticación", HttpStatus.UNAUTHORIZED);
         }
     }
 }

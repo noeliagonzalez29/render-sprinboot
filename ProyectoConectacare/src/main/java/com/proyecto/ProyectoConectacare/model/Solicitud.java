@@ -13,6 +13,21 @@ public class Solicitud {
     @ServerTimestamp
     private Date fechaSolicitud;
     private EstadoSolicitud estado;
+    private String clienteId;
+    private boolean completado;
+    public String getClienteId() {
+        return clienteId;
+    }
+    public boolean isCompletado() {
+        return completado;
+    }
+
+    public void setCompletado(boolean completado) {
+        this.completado = completado;
+    }
+    public void setClienteId(String clienteId) {
+        this.clienteId = clienteId;
+    }
 
     public String getId() {
         return id;
