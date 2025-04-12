@@ -62,4 +62,22 @@ public class SolicitudController {
     public List<Solicitud> obtenerSolicitudesPorTrabajador(@PathVariable String trabajadorId) {
         return solicitudService.getSolicitudesByTrabajadorId(trabajadorId);
     }
+
+    @GetMapping("/mias")
+    public ResponseEntity<List<Solicitud>> obtenerMisSolicitudes(@RequestHeader("Authorization") String token) {
+        try {
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+
+            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
+            String trabajadorId = decodedToken.getUid(); // 🔐 UID real del trabajador autenticado
+
+            List<Solicitud> solicitudes = solicitudService.getSolicitudesByTrabajadorId(trabajadorId);
+            return new ResponseEntity<>(solicitudes, HttpStatus.OK);
+
+        } catch (FirebaseAuthException e) {
+            throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);
+        }
+    }
 }
