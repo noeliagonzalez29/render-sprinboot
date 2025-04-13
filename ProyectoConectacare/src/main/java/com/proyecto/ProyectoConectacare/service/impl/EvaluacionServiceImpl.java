@@ -51,14 +51,18 @@ public class EvaluacionServiceImpl implements EvaluacionService {
     @Override
     public List<Evaluacion> getEvaluacionesByTrabajadorId(String trabajadorId) {
         try {
-            return db.collection(COLECCION)
+            return db.collection("evaluaciones")
                     .whereEqualTo("trabajadorId", trabajadorId)
                     .get().get().getDocuments()
                     .stream()
-                    .map(doc -> doc.toObject(Evaluacion.class))
+                    .map(doc -> {
+                        Evaluacion ev = doc.toObject(Evaluacion.class);
+                        ev.setId(doc.getId());
+                        return ev;
+                    })
                     .collect(Collectors.toList());
-        } catch (InterruptedException | ExecutionException e) {
-            throw new PresentationException("Error al obtener evaluaciones", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            throw new PresentationException("Error al obtener valoraciones", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

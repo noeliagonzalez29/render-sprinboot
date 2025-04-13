@@ -66,4 +66,20 @@ public class EvaluacionController {
     public List<Evaluacion> obtenerEvaluacionesTrabajador(@PathVariable String trabajadorId) {
         return evaluacionService.getEvaluacionesByTrabajadorId(trabajadorId);
     }
+    @GetMapping("/mias")
+    public ResponseEntity<List<Evaluacion>> obtenerMisEvaluaciones(@RequestHeader("Authorization") String token) {
+        try {
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
+            }
+            FirebaseToken decoded = firebaseAuth.verifyIdToken(token);
+            String trabajadorId = decoded.getUid();
+
+            List<Evaluacion> evaluaciones = evaluacionService.getEvaluacionesByTrabajadorId(trabajadorId);
+            return new ResponseEntity<>(evaluaciones, HttpStatus.OK);
+        } catch (FirebaseAuthException e) {
+            throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);
+        }
+    }
+
 }
