@@ -105,12 +105,23 @@ public class UsuariosController {
         Usuario usuario = usuarioService.getUsuarioById(id);
         return ResponseEntity.ok(usuario);
     }
-
+/*
     @GetMapping
-    public List<Usuario> listarUsuarios() {
-        return usuarioService.getAllUsuarios();
+    public ResponseEntity<List<Usuario>> obtenerUsuarios(@RequestHeader("Authorization") String token) throws FirebaseAuthException {
+        if (token.startsWith("Bearer ")) {
+            token=  token.substring(7);
+        }
+        FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
+
+        Usuario usuarioActual = usuarioService.getUsuarioById(decodedToken.getUid());
+        if (usuarioActual == null || usuarioActual.getRol() != Rol.ADMINISTRADOR) {
+            throw new PresentationException("Acceso denegado", HttpStatus.FORBIDDEN);
+        }
+
+        return ResponseEntity.ok(usuarioService.getAllUsuarios());
     }
 
+*/
     @PutMapping("/{id}")
     public ResponseEntity<Usuario> actualizarUsuario(
             @PathVariable String id,
@@ -131,11 +142,8 @@ public class UsuariosController {
         Usuario usuarioActualizado = usuarioService.updateUsuario(id, updates);
         return ResponseEntity.ok(usuarioActualizado);
     }
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarUsuario(@PathVariable String id) {
-        usuarioService.deleteUsuario(id);
-        return ResponseEntity.noContent().build();
-    }
+
+
 
     @GetMapping("/yo")
     public ResponseEntity<Usuario> obtenerMiUsuario(@RequestHeader("Authorization") String token) {

@@ -3,6 +3,7 @@ package com.proyecto.ProyectoConectacare.service.impl;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Anuncio;
 import com.proyecto.ProyectoConectacare.service.AnuncioService;
@@ -85,6 +86,15 @@ public class AnuncioServiceImpl implements AnuncioService {
             return db.collection("anuncios").document(anuncioId).get().get().exists();
         } catch (InterruptedException | ExecutionException e) {
             throw new PresentationException("Error verificando anuncio", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    public int contarTotalAnuncios() {
+        try {
+            return db.collection("anuncios").get().get().getDocuments().size();
+        } catch (Exception e) {
+            throw new PresentationException("Error al contar anuncios", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

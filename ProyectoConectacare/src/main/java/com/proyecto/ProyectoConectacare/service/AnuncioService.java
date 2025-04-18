@@ -9,4 +9,5 @@ public interface AnuncioService {
     Anuncio getAnuncioById(String id);
     List<Anuncio> getAllAnuncios();
     List<Anuncio> getAnunciosByClienteId(String clienteId);
+    int contarTotalAnuncios();
 }
