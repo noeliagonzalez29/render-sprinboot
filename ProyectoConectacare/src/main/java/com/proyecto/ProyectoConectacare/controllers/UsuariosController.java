@@ -56,8 +56,8 @@ public class UsuariosController {
             Usuario usuarioGuardado = usuarioService.createUsuario(usuario);
             return new ResponseEntity<>(usuarioGuardado, HttpStatus.CREATED);
         } catch (FirebaseAuthException e) {
-            System.out.println("🔥 Error Firebase: " + e.getMessage());
-            System.out.println("🔥 Código de error: " + e.getErrorCode());
+           // System.out.println("🔥 Error Firebase: " + e.getMessage());
+           // System.out.println("🔥 Código de error: " + e.getErrorCode());
             if (e.getErrorCode().equals("email-already-exists")) {
                 throw new PresentationException("El email ya está registrado", HttpStatus.BAD_REQUEST);
             }
@@ -87,8 +87,9 @@ public class UsuariosController {
             usuario.setDisponibilidad(trabajadorDTO.getDisponibilidad());
             usuario.setEstudios(trabajadorDTO.getEstudios());
             usuario.setHabilidades(trabajadorDTO.getHabilidades());
+            usuario.setExperiencia(trabajadorDTO.getExperiencia());
 
-            System.out.println("🔐 UID Firebase al registrar: " + usuario.getId());
+            //System.out.println("🔐 UID Firebase al registrar: " + usuario.getId());
             // 3. Guardar en Firestore
             Usuario usuarioGuardado = usuarioService.createUsuario(usuario);
             return new ResponseEntity<>(usuarioGuardado, HttpStatus.CREATED);
@@ -153,7 +154,7 @@ public class UsuariosController {
         try {
             FirebaseToken decoded = firebaseAuth.verifyIdToken(token);
             String uid = decoded.getUid();
-            System.out.println("🔐 UID Firebase al login: " + uid);
+            //System.out.println("🔐 UID Firebase al login: " + uid);
             Usuario usuario = usuarioService.getUsuarioById(uid);
             return ResponseEntity.ok(usuario);
         } catch (FirebaseAuthException e) {
