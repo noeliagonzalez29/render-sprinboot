@@ -77,13 +77,19 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
     private boolean esRutaPublica(HttpServletRequest request) {
         String path = request.getRequestURI();
         String method = request.getMethod();
-
+        /*
         // Permitir rutas públicas por path
         boolean rutaCoincide = rutasPublicas.stream()
                 .anyMatch(ruta -> path.startsWith(ruta));
+        */
+        // Permitir solo GET en rutas públicas (Swagger, etc.)
+        boolean rutaPublicaGet = rutasPublicas.stream()
+                .anyMatch(ruta -> path.startsWith(ruta) && "GET".equalsIgnoreCase(method));
 
+        // Permitir POST/PUT en endpoints de registro (configurados en SecurityConfig)
+        boolean esRegistro = path.startsWith("/usuarios/cliente") || path.startsWith("/usuarios/trabajador");
 
-        return rutaCoincide;
+        return rutaPublicaGet || esRegistro;
     }
 
     private void enviarError(HttpServletResponse response, String mensaje) throws IOException {
