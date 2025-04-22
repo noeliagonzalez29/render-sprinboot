@@ -154,8 +154,10 @@ public class UsuariosController {
         try {
             FirebaseToken decoded = firebaseAuth.verifyIdToken(token);
             String uid = decoded.getUid();
-            //System.out.println("🔐 UID Firebase al login: " + uid);
+            System.out.println("🔐 UID Firebase al login: " + uid);
             Usuario usuario = usuarioService.getUsuarioById(uid);
+
+
             return ResponseEntity.ok(usuario);
         } catch (FirebaseAuthException e) {
             throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);

@@ -71,6 +71,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         try {
             DocumentSnapshot document = db.collection(COLECCION).document(id).get().get();
             if (document.exists()) {
+                System.out.println("Datos del documento: " + document.getData());
                 return document.toObject(Usuario.class);
             }
             throw new PresentationException("Usuario no encontrado", HttpStatus.NOT_FOUND);

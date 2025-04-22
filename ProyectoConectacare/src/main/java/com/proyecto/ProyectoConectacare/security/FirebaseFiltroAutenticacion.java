@@ -22,9 +22,9 @@ import java.util.List;
 public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
 
     private final List<String> rutasPublicas = List.of(
-            "/usuarios/cliente",
-            "/usuarios/trabajador",
-            "/usuarios/trabajador/**",
+            //"/usuarios/cliente",
+           // "/usuarios/trabajador",
+           // "/usuarios/trabajador/**",
             "/api/public",
             "/swagger-ui",
             "/swagger-resources",
