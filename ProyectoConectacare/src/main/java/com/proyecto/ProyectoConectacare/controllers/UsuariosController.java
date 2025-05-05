@@ -7,8 +7,10 @@ import com.google.firebase.auth.UserRecord;
 import com.proyecto.ProyectoConectacare.dto.ClienteDTO;
 import com.proyecto.ProyectoConectacare.dto.TrabajadorDTO;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
+import com.proyecto.ProyectoConectacare.model.Evento;
 import com.proyecto.ProyectoConectacare.model.Rol;
 import com.proyecto.ProyectoConectacare.model.Usuario;
+import com.proyecto.ProyectoConectacare.service.LogEstadisticaService;
 import com.proyecto.ProyectoConectacare.service.UsuarioService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -18,46 +20,61 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Controlador para gestionar operaciones relacionadas con los usuarios, como el registro, la recuperación y la actualización de usuarios en el sistema. Gestiona los roles de usuario Cliente y Trabajador.
+ * Utiliza Firebase para la autenticación y Firestore para el almacenamiento de datos.
+ */
 @RestController
 @RequestMapping("/usuarios")
 public class UsuariosController {
     private final UsuarioService usuarioService;
     private final FirebaseAuth firebaseAuth;
+    private final LogEstadisticaService logEstadisticasService;
 
-    public UsuariosController(UsuarioService usuarioService, FirebaseAuth firebaseAuth) {
+    public UsuariosController(UsuarioService usuarioService, FirebaseAuth firebaseAuth, LogEstadisticaService logEstadisticasService) {
         this.usuarioService = usuarioService;
         this.firebaseAuth = firebaseAuth;
+        this.logEstadisticasService = logEstadisticasService;
     }
 
 
+    /**
+     * Registra un nuevo cliente utilizando los datos del cliente y el token de autorización proporcionados.
+     * El método extrae y valida el token de Firebase proporcionado, crea un nuevo usuario
+     * en la base de datos de Firestore y le asigna el rol CLIENTE.
+     *
+     * @param clienteDTO Objeto que contiene los datos del cliente, como nombre, correo electrónico, dirección, etc.
+     * @param token Token de autorización con el formato "Bearer <token>" utilizado para validar
+     * e identificar al usuario en Firebase.
+     * @return Una ResponseEntity que contiene el objeto Usuario creado y el código de estado HTTP 201 (CREATED),
+     * o una excepción con el estado HTTP correspondiente en caso de errores durante el registro.
+     */
     @PostMapping("/cliente")
     public ResponseEntity<Usuario> registrarCliente(@Valid @RequestBody ClienteDTO clienteDTO,  @RequestHeader("Authorization") String token)  {
 
-
         try {
-            // 1. Extraer el token y quitar "Bearer " si es necesario.
+
             if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
-            // 2. Verificar el token y extraer el UID.
+            // Verificar el token y extraer el UID.
             FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
             String uid = decodedToken.getUid();
-            // 3. Crear objeto Usuario para Firestore usando el UID obtenido.
+            // Crear objeto Usuario para Firestore usando el UID obtenido.
             Usuario usuario = new Usuario();
             usuario.setId(uid);
-            usuario.setEmail(clienteDTO.getEmail()); // Asegúrate de que este email coincida con el registrado en Firebase.
+            usuario.setEmail(clienteDTO.getEmail());
             usuario.setRol(Rol.CLIENTE);
             usuario.setNombre(clienteDTO.getNombre());
             usuario.setApellido(clienteDTO.getApellido());
             usuario.setDireccion(clienteDTO.getDireccion());
             usuario.setNecesidades(clienteDTO.getNecesidades());
 
-            // 3. Guardar en Firestore
+            //  Guardar en Firestore
             Usuario usuarioGuardado = usuarioService.createUsuario(usuario);
             return new ResponseEntity<>(usuarioGuardado, HttpStatus.CREATED);
         } catch (FirebaseAuthException e) {
-           // System.out.println("🔥 Error Firebase: " + e.getMessage());
-           // System.out.println("🔥 Código de error: " + e.getErrorCode());
+
             if (e.getErrorCode().equals("email-already-exists")) {
                 throw new PresentationException("El email ya está registrado", HttpStatus.BAD_REQUEST);
             }
@@ -65,6 +82,17 @@ public class UsuariosController {
         }
     }
 
+    /**
+     * Gestiona el registro de un nuevo usuario "Trabajador". Extrae y verifica
+     * el token de Firebase proporcionado, crea el objeto Usuario correspondiente y
+     * lo guarda en la base de datos.
+     *
+     * @param trabajadorDTO El objeto de transferencia de datos que contiene los datos del usuario, como nombre, correo electrónico,
+     * disponibilidad, estudios, habilidades y experiencia.
+     * @param token El token de autorización proporcionado en el encabezado de la solicitud HTTP, utilizado para verificar la sesión del usuario y recuperar el UID de Firebase.
+     * @return Una ResponseEntity que contiene el objeto Usuario creado y un estado HTTP de CREADO.
+     * Si se produce algún error durante el proceso, se genera una excepción con el código de estado correspondiente.
+     */
     @PostMapping("/trabajador")
     public ResponseEntity<Usuario> registrarTrabajador(@Valid @RequestBody TrabajadorDTO trabajadorDTO, @RequestHeader("Authorization") String token){
 
@@ -89,7 +117,7 @@ public class UsuariosController {
             usuario.setHabilidades(trabajadorDTO.getHabilidades());
             usuario.setExperiencia(trabajadorDTO.getExperiencia());
 
-            //System.out.println("🔐 UID Firebase al registrar: " + usuario.getId());
+
             // 3. Guardar en Firestore
             Usuario usuarioGuardado = usuarioService.createUsuario(usuario);
             return new ResponseEntity<>(usuarioGuardado, HttpStatus.CREATED);
@@ -101,39 +129,43 @@ public class UsuariosController {
         }
     }
 
+    /**
+     * Recupera un usuario por su identificador único.
+     *
+     * @param id el identificador único del usuario a recuperar
+     * @return una ResponseEntity que contiene el usuario si se encuentra, o un estado HTTP apropiado si no
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Usuario> obtenerUsuario(@PathVariable String id) {
         Usuario usuario = usuarioService.getUsuarioById(id);
+
         return ResponseEntity.ok(usuario);
     }
-/*
-    @GetMapping
-    public ResponseEntity<List<Usuario>> obtenerUsuarios(@RequestHeader("Authorization") String token) throws FirebaseAuthException {
-        if (token.startsWith("Bearer ")) {
-            token=  token.substring(7);
-        }
-        FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
 
-        Usuario usuarioActual = usuarioService.getUsuarioById(decodedToken.getUid());
-        if (usuarioActual == null || usuarioActual.getRol() != Rol.ADMINISTRADOR) {
-            throw new PresentationException("Acceso denegado", HttpStatus.FORBIDDEN);
-        }
-
-        return ResponseEntity.ok(usuarioService.getAllUsuarios());
-    }
-
-*/
+    /**
+     * Actualiza la información del usuario según el ID proporcionado y los campos de actualización.
+     *
+     * Este método valida el token de autorización y garantiza que un usuario solo pueda
+     * actualizar su propio perfil. También restringe las actualizaciones a campos específicos
+     * según el rol del usuario.
+     *
+     * @param id El identificador único del usuario que se actualizará.
+     * @param updates Un mapa que contiene los campos y valores que se actualizarán para el usuario.
+     * @param token El token de autorización del encabezado de la solicitud.
+     * @return Una ResponseEntity que contiene la información actualizada del usuario.
+     * @throws FirebaseAuthException Si hay un error al validar el token.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Usuario> actualizarUsuario(
             @PathVariable String id,
             @RequestBody Map<String, Object> updates, @RequestHeader("Authorization") String token
             ) throws FirebaseAuthException {
 
-        // Extraer token si contiene "Bearer "
+
         if (token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
-        // Validar token y que el usuario actualice solo su perfil
+
         FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
         if (!decodedToken.getUid().equals(id)) {
             throw new PresentationException("No autorizado", HttpStatus.FORBIDDEN);
@@ -145,7 +177,13 @@ public class UsuariosController {
     }
 
 
-
+    /**
+     * Recupera la información del usuario actual basándose en el token de autorización proporcionado.
+     *
+     * @param token: el token de autorización del encabezado de la solicitud, utilizado para verificar e identificar al usuario.
+     * @return: una ResponseEntity que contiene la información del usuario si el token es válido.
+     * @throws: PresentationException si el token no es válido o el proceso de verificación falla.
+     */
     @GetMapping("/yo")
     public ResponseEntity<Usuario> obtenerMiUsuario(@RequestHeader("Authorization") String token) {
         if (token.startsWith("Bearer ")) {
@@ -154,10 +192,10 @@ public class UsuariosController {
         try {
             FirebaseToken decoded = firebaseAuth.verifyIdToken(token);
             String uid = decoded.getUid();
-            System.out.println("🔐 UID Firebase al login: " + uid);
+
             Usuario usuario = usuarioService.getUsuarioById(uid);
 
-
+            logEstadisticasService.registrarEvento(usuario, Evento.INICIO_SESION);
             return ResponseEntity.ok(usuario);
         } catch (FirebaseAuthException e) {
             throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);

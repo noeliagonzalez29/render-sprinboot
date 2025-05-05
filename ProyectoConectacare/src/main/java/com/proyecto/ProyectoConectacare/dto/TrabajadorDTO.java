@@ -6,6 +6,20 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 
+/**
+ * Representa el objeto de transferencia de datos (DTO) de una entidad de trabajador.
+ * Extiende la clase RegistroDTO para incluir propiedades adicionales específicas de los trabajadores.
+ * Esta clase se utiliza para encapsular y gestionar la información de los trabajadores, normalmente para transferir datos entre capas de la aplicación.
+ *
+ * Las propiedades incluyen:
+ * - Datos personales como nombre, apellidos y teléfono.
+ * - Disponibilidad (representada como disponibilidad).
+ * - Una lista de habilidades del trabajador.
+ * - Formación académica (estudios).
+ * - Experiencia laboral (experiencia).
+ *
+ * Esta clase proporciona métodos getter y setter para gestionar estas propiedades.
+ */
 public class TrabajadorDTO extends RegistroDTO {
 
     @NotBlank

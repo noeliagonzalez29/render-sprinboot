@@ -23,6 +23,13 @@ public class EvaluacionServiceImpl implements EvaluacionService {
         this.db = db;
     }
 
+    /**
+     * Crea una nueva Evaluación y la almacena en la base de datos.
+     *
+     * @param evaluacion el objeto de Evaluación que se creará y guardará.
+     * @return la Evaluación recién creada con su ID generado.
+     * @throws PresentationException si hay un error durante el proceso de creación.
+     */
     @Override
     public Evaluacion createEvaluacion(Evaluacion evaluacion) {
         try {
@@ -35,6 +42,13 @@ public class EvaluacionServiceImpl implements EvaluacionService {
         }
     }
 
+    /**
+     * Recupera un objeto de evaluación de la base de datos mediante su identificador único.
+     *
+     * @param id: el identificador único de la evaluación que se recuperará.
+     * @return: el objeto de evaluación correspondiente al identificador especificado.
+     * @throws: PresentationException si no se encuentra la evaluación o si se produce un error durante el proceso de recuperación.
+     */
     @Override
     public Evaluacion getEvaluacionById(String id) {
         try {
@@ -48,6 +62,13 @@ public class EvaluacionServiceImpl implements EvaluacionService {
         }
     }
 
+    /**
+     * Recupera una lista de objetos de evaluación asociados a un trabajadorId específico.
+     *
+     * @param trabajadorId: el identificador único del trabajador cuyas evaluaciones se recuperarán.
+     * @return: una lista de objetos de evaluación correspondientes al trabajadorId especificado.
+     * @throws: PresentationException si se produce un error durante el proceso de recuperación.
+     */
     @Override
     public List<Evaluacion> getEvaluacionesByTrabajadorId(String trabajadorId) {
         try {
@@ -65,6 +86,5 @@ public class EvaluacionServiceImpl implements EvaluacionService {
             throw new PresentationException("Error al obtener valoraciones", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
 }

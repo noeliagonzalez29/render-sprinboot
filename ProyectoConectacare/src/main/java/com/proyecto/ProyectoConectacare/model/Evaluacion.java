@@ -8,6 +8,23 @@ import jakarta.validation.constraints.Min;
 import java.util.Date;
 
 
+/**
+ * La clase "Evaluación" representa una reseña o evaluación de un servicio prestado por un trabajador a un cliente.
+ * Incluye varios atributos como el ID del trabajador, el ID del cliente, la calificación y un comentario opcional.
+ * Además, registra la fecha de la evaluación y el ID de la solicitud de servicio asociada.
+ *
+ * Esta clase está diseñada para gestionar la recopilación y gestión de datos de retroalimentación,
+ * garantizando restricciones en las calificaciones y la gestión de marcas de tiempo para las evaluaciones.
+ *
+ * Atributos:
+ * - id: Identificador único de la evaluación.
+ * - trabajadorId: Identificador del trabajador evaluado.
+ * - clienteId: Identificador del cliente que proporciona la evaluación.
+ * - estrellas: Calificación otorgada por el cliente, con un límite de 1 a 5.
+ * - comentario: Comentario o retroalimentación opcional proporcionado por el cliente.
+ * - fechaEvaluación: Marca de tiempo que indica cuándo se registró la evaluación.
+ * - solicitudId: Identificador de la solicitud de servicio asociada.
+ */
 public class Evaluacion {
     private String id;
     private String trabajadorId;

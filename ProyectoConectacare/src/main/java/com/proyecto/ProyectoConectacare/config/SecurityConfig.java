@@ -16,6 +16,33 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * Clase responsable de configurar los ajustes de seguridad de la aplicación Spring Boot.
+ * Configura la autenticación, la autorización y diversas funciones relacionadas con la seguridad.
+ *
+ * Una instancia de esta clase configura el objeto HttpSecurity y establece una cadena de filtros.
+ * utilizada para proteger las solicitudes HTTP.
+ *
+ * Funcionalidades clave:
+ * - Configura el Intercambio de Recursos entre Orígenes (CORS) para permitir el acceso controlado desde orígenes específicos.
+ * - Desactiva la protección contra la Falsificación de Solicitudes entre Sitios (CSRF) para permitir solicitudes de API REST sin estado.
+ * - Configura la gestión de sesiones sin estado para evitar la creación y el uso de sesiones del lado del servidor.
+ * - Define reglas de acceso para rutas HTTP, incluyendo endpoints públicos y autenticados.
+ * - Incorpora un filtro de autenticación personalizado que utiliza Firebase para la autenticación basada en tokens.
+ *
+ * Beans:
+ * - `SecurityFilterChain`: Configura la cadena de filtros de seguridad utilizada para interceptar y procesar solicitudes HTTP. * - `CorsConfigurationSource`: Proporciona una configuración CORS personalizada para definir orígenes, métodos y encabezados permitidos.
+ *
+ * Dependencias:
+ * - Esta clase depende del componente `FirebaseFiltroAutenticacion` para gestionar la autenticación basada en Firebase
+ * y extraer información del usuario de los tokens de ID.
+ *
+ * Autorización de ruta:
+ * - Las rutas de acceso público incluyen los endpoints en `/api/public/**`, las rutas de documentación de Swagger
+ * y ciertos endpoints de registro.
+ * - Los endpoints de administración (`/admin/**`) y otras rutas autenticadas requieren una autenticación válida.
+ *
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -49,7 +76,6 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
-
                         ).permitAll()
                         .requestMatchers("/admin/**").authenticated()
                         .anyRequest().authenticated()
@@ -65,7 +91,8 @@ public class SecurityConfig {
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("https://proyectoconectacare.web.app"));
+        configuration.setAllowedOrigins(List.of("https://proyectoconectacare.web.app",
+                "https://proyectoconectacare.firebaseapp.com"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

@@ -6,6 +6,21 @@ import com.google.cloud.firestore.annotation.ServerTimestamp;
 import java.util.Date;
 
 
+/**
+ * La clase Solicitud representa una solicitud o aplicación realizada por un trabajador a un anuncio.
+ * Está diseñada para gestionar la interacción entre clientes y trabajadores dentro de un sistema.
+ *
+ * Esta clase incluye información como:
+ * - El ID de la solicitud.
+ * - El ID del anuncio asociado.
+ * - El ID del trabajador que creó la solicitud.
+ * - El ID del cliente propietario del anuncio.
+ * - La marca de tiempo que indica cuándo se creó la solicitud.
+ * - El estado actual de la solicitud, representado por la enumeración EstadoSolicitud.
+ * - Un indicador que indica si la solicitud se ha completado.
+ *
+ * Se proporcionan métodos para acceder y modificar estos atributos.
+ */
 public class Solicitud {
     private String id;
     private String anuncioId;

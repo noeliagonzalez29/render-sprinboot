@@ -4,10 +4,15 @@ package com.proyecto.ProyectoConectacare.model;
 import java.util.List;
 
 
+/**
+ * La clase Anuncio representa un anuncio o anuncio relacionado con diversos servicios, como asistencia domiciliaria, cuidado personal, compañía y atención médica.
+ * Proporciona detalles sobre el cliente que creó el anuncio y comentarios o notas asociados.
+ * La clase incluye métodos para acceder y modificar los atributos del anuncio.
+ */
 public class Anuncio {
     private String id;
     private String clienteId;
-
+    private String nombreCliente;
     private List<String> hogar;
     private List<String> personal;
     private List<String> acompanamiento;
@@ -15,6 +20,14 @@ public class Anuncio {
     private String comentarios;
 
     public Anuncio() {
+    }
+
+    public String getNombreCliente() {
+        return nombreCliente;
+    }
+
+    public void setNombreCliente(String nombreCliente) {
+        this.nombreCliente = nombreCliente;
     }
 
     public String getId() {

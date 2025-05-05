@@ -6,6 +6,14 @@ import com.google.cloud.firestore.annotation.ServerTimestamp;
 import java.util.Date;
 
 
+/**
+ * La clase Mensaje representa un mensaje enviado entre un remitente y un destinatario.
+ * Incluye detalles sobre el remitente, el destinatario, el contenido del mensaje y la marca de tiempo
+ * que indica cuándo se envió el mensaje.
+ *
+ * Esta clase está diseñada para la comunicación entre diferentes usuarios, como clientes
+ * y trabajadores, dentro del sistema.
+ */
 public class Mensaje {
     private String id;
     private String remitenteId;   // Puede ser el id del cliente o trabajador

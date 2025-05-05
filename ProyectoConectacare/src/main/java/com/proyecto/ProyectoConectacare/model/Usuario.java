@@ -9,6 +9,33 @@ import java.util.List;
 import java.util.Objects;
 
 
+/**
+ * La clase Usuario representa a un usuario dentro de la aplicación, incluyendo información personal y específica del rol, como nombre, información de contacto, tipo de rol, etc.
+ * Esta clase admite usuarios de tipo cliente y trabajador, con campos opcionales según el rol.
+ *
+ * Atributos:
+ * - `id`: Un identificador único para el usuario.
+ * - `nombre`: El nombre del usuario. No debe estar vacío.
+ * - `apellido`: El apellido del usuario.
+ * - `telefono`: El número de teléfono de contacto del usuario. No debe estar vacío.
+ * - `email`: La dirección de correo electrónico del usuario. Debe ser válida y no estar vacía.
+ * - `password`: La contraseña de la cuenta del usuario.
+ * - `rol`: El rol asignado al usuario (p. ej., CLIENTE, TRABAJADOR, ADMINISTRADOR). No debe ser nulo.
+ *
+ * Atributos adicionales para el rol CLIENTE:
+ * - `direccion`: La dirección física del cliente.
+ * - `necesidades`: Una lista que detalla las necesidades o servicios específicos que requiere el cliente.
+ *
+ * Atributos adicionales para el rol TRABAJADOR:
+ * - `disponibilidad`: Detalles de la disponibilidad del trabajador.
+ * - `estudios`: Información sobre la formación del trabajador.
+ * - `experiencia`: Detalles sobre la experiencia profesional del trabajador.
+ * - `habilidades`: Una lista de las habilidades que posee el trabajador.
+ *
+ * Esta clase incluye métodos para obtener y establecer todos los atributos,
+ * así como los métodos `equals` y `hashCode`  para comparar objetos de usuario
+ * según su identificador único.
+ */
 public class Usuario {
 
     private String id;

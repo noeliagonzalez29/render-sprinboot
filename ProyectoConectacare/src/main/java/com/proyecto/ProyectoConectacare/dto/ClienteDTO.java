@@ -6,13 +6,17 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 
+/**
+ * Representa el objeto de transferencia de datos para una entidad cliente.
+ * Extiende la clase RegistroDTO para incluir propiedades adicionales específicas de un cliente.
+ * Esta clase se utiliza normalmente para transferir datos relacionados con el cliente entre las capas de la aplicación.
+ */
 public class ClienteDTO extends RegistroDTO{
 
     @NotBlank
     private String nombre;
     private String apellido;
     private String direccion;
-    private String telefono;
     private List<String> necesidades;
 
     public ClienteDTO() {
@@ -50,11 +54,5 @@ public class ClienteDTO extends RegistroDTO{
         this.necesidades = necesidades;
     }
 
-    public String getTelefono() {
-        return telefono;
-    }
 
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
 }

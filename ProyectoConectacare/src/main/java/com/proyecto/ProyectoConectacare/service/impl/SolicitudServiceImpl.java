@@ -32,6 +32,16 @@ public class SolicitudServiceImpl implements SolicitudService {
 
     }
 
+    /**
+     * Crea una nueva instancia de Solicitud y la persiste en la base de datos.
+     * El método recupera información relacionada de la colección "anuncios"
+     * para rellenar el objeto Solicitud con los datos necesarios.
+     *
+     * @param solicitud El objeto Solicitud que contiene los datos iniciales de la nueva instancia.
+     * Debe incluir un ID de Anuncio válido para vincular la solicitud a un anuncio existente.
+     * @return El objeto Solicitud completamente creado con su ID, estado y campos adicionales configurados.
+     * @throws PresentationException Si no se encuentra el Anuncio relacionado o se produce algún error al crear la Solicitud.
+     */
     @Override
     public Solicitud createSolicitud(Solicitud solicitud) {
         try {
@@ -61,6 +71,13 @@ public class SolicitudServiceImpl implements SolicitudService {
         }
     }
 
+    /**
+     * Obtiene y recupera de la base de datos un objeto Solicitud correspondiente al ID especificado.
+     *
+     * @param id El identificador único de la Solicitud que se recuperará.
+     * @return El objeto Solicitud asociado al ID dado.
+     * @throws PresentationException si no se encuentra la Solicitud o si hay un error durante la recuperación.
+     */
     @Override
     public Solicitud getSolicitudById(String id) {
         try {
@@ -74,6 +91,13 @@ public class SolicitudServiceImpl implements SolicitudService {
         }
     }
 
+    /**
+     * Recupera una lista de objetos Solicitud asociados a un ID de anuncio específico.
+     *
+     * @param anuncioId: el ID del anuncio para el que se deben recuperar las solicitudes.
+     * @return: una lista de objetos Solicitud asociados al ID de anuncio especificado.
+     * @throws: PresentationException si se produce un error durante el proceso de recuperación.
+     */
     @Override
     public List<Solicitud> getSolicitudesByAnuncioId(String anuncioId) {
         try {
@@ -88,6 +112,13 @@ public class SolicitudServiceImpl implements SolicitudService {
         }
     }
 
+    /**
+     * Recupera una lista de objetos "Solicitud" asociados con el trabajadorId especificado.
+     *
+     * @param trabajadorId: el ID del trabajador cuyas solicitudes se recuperarán.
+     * @return: una lista de objetos "Solicitud" asociados con el trabajadorId proporcionado.
+     * @throws: una excepción PresentationException si se produce un error durante el proceso de recuperación.
+     */
     @Override
     public List<Solicitud> getSolicitudesByTrabajadorId(String trabajadorId) {
         try {
@@ -97,7 +128,7 @@ public class SolicitudServiceImpl implements SolicitudService {
                     .stream()
                     .map(doc -> {
                         Solicitud s = doc.toObject(Solicitud.class);
-                        s.setId(doc.getId()); // 👈 importante para tener el id del documento
+                        s.setId(doc.getId());
                         return s;
                     })
                     .collect(Collectors.toList());
@@ -105,6 +136,16 @@ public class SolicitudServiceImpl implements SolicitudService {
             throw new PresentationException("Error al obtener solicitudes", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    /**
+     * Recupera una lista de objetos "SolicitudConTrabajadorDTO" asociados a un ID de cliente específico.
+     * El método obtiene datos de varias colecciones, incluyendo "anuncios", "solicitudes",
+     * "evaluaciones" y "usuarios". Mapea los datos recuperados en DTO, gestionando propiedades adicionales como el estado de finalización y la existencia de la evaluación.
+     *
+     * @param clienteId El identificador único del cliente cuyas solicitudes se recuperarán.
+     * @return Una lista de objetos "SolicitudConTrabajadorDTO" asociados al ID de cliente especificado.
+     * Si no se encuentran solicitudes, se devuelve una lista vacía.
+     * @throws PresentationException Si se produce algún error durante la recuperación de la base de datos o la asignación de datos.
+     */
     public List<SolicitudConTrabajadorDTO> getSolicitudesByClienteId(String clienteId) {
         try {
             List<String> misAnunciosIds = db.collection("anuncios")
@@ -124,6 +165,19 @@ public class SolicitudServiceImpl implements SolicitudService {
                         Solicitud solicitud = doc.toObject(Solicitud.class);
                         solicitud.setId(doc.getId());
 
+                        // Verificar si existe evaluación (nuevo)
+                        boolean existeEvaluacion = false;
+                        try {
+                            existeEvaluacion = !db.collection("evaluaciones")
+                                    .whereEqualTo("solicitudId", solicitud.getId())
+                                    .get().get().isEmpty();
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        } catch (ExecutionException e) {
+                            throw new RuntimeException(e);
+                        }
+
+                        // Obtener datos del trabajador
                         DocumentSnapshot trabajadorDoc = null;
                         try {
                             trabajadorDoc = db.collection("usuarios")
@@ -135,7 +189,11 @@ public class SolicitudServiceImpl implements SolicitudService {
                             throw new RuntimeException(e);
                         }
 
-                        return mapToDto(solicitud, trabajadorDoc);
+                        // Mapear a DTO
+                        SolicitudConTrabajadorDTO dto = mapToDto(solicitud, trabajadorDoc);
+                        dto.setCompletado(solicitud.isCompletado());
+                        dto.setEvaluacionExistente(existeEvaluacion);
+                        return dto;
                     })
                     .collect(Collectors.toList());
 
@@ -144,6 +202,13 @@ public class SolicitudServiceImpl implements SolicitudService {
         }
     }
 
+    /**
+     * Asigna una Solicitud y su DocumentSnapshot asociado de un trabajador a una SolicitudConTrabajadorDTO.
+     *
+     * @param solicitud: el objeto de solicitud que contiene la información principal de la solicitud.
+     * @param trabajadorDoc: el DocumentSnapshot que contiene los detalles del trabajador.
+     * @return: una SolicitudConTrabajadorDTO rellenada con los datos de la solicitud y trabajadorDoc.
+     */
     private SolicitudConTrabajadorDTO mapToDto(Solicitud solicitud, DocumentSnapshot trabajadorDoc) {
         SolicitudConTrabajadorDTO dto = new SolicitudConTrabajadorDTO();
         dto.setId(solicitud.getId());
@@ -173,6 +238,13 @@ public class SolicitudServiceImpl implements SolicitudService {
         return dto;
     }
 
+    /**
+     * Marca una solicitud específica como completada en la base de datos y recupera el objeto de solicitud actualizado.
+     *
+     * @param solicitudId: el identificador de la solicitud que se marcará como completada.
+     * @return: el objeto de Solicitud actualizado después de que se haya marcado como completada.
+     * @throws: PresentationException si hay un error al actualizar la solicitud en la base de datos.
+     */
     public Solicitud marcarComoCompletado(String solicitudId) {
         try {
             DocumentReference docRef = db.collection("solicitudes").document(solicitudId);
@@ -182,6 +254,14 @@ public class SolicitudServiceImpl implements SolicitudService {
             throw new PresentationException("Error al actualizar solicitud", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    /**
+     * Actualiza el estado de una solicitud existente en la base de datos.
+     *
+     * @param solicitudId El identificador único de la solicitud que se desea actualizar.
+     * @param nuevoEstado El nuevo estado que se desea asignar a la solicitud.
+     * @return La solicitud actualizada con los datos más recientes desde la base de datos.
+     * @throws PresentationException Si ocurre un error durante la actualización o recuperación de la solicitud.
+     */
     @Override
     public Solicitud actualizarEstadoSolicitud(String solicitudId, EstadoSolicitud nuevoEstado) {
         try {
@@ -192,7 +272,6 @@ public class SolicitudServiceImpl implements SolicitudService {
 
             docRef.update(updates).get(); // Espera que se aplique
 
-            // Devolver la solicitud actualizada (opcional)
             DocumentSnapshot snapshot = docRef.get().get();
             return snapshot.toObject(Solicitud.class);
 

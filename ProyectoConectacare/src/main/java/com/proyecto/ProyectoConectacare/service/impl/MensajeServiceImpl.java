@@ -23,8 +23,16 @@ public class MensajeServiceImpl implements MensajeService {
         this.db = db;
     }
 
+    /**
+     * Envía un mensaje guardándolo en la base de datos. El método asigna un ID único al mensaje,
+     * establece la marca de tiempo de su envío y lo almacena en la colección especificada.
+     *
+     * @param mensaje El objeto del mensaje que se enviará. Debe contener el ID del remitente, el ID del destinatario y el contenido del mensaje.
+     * @return El objeto del mensaje con el ID generado y la marca de tiempo establecida.
+     * @throws PresentationException Si se produce un error al guardar el mensaje.
+     */
     @Override
-    public Mensaje sendMensaje(Mensaje mensaje) {
+    public Mensaje mandarMensaje(Mensaje mensaje) {
         try {
             DocumentReference docRef = db.collection(COLECCION).document();
             mensaje.setId(docRef.getId());
@@ -36,6 +44,15 @@ public class MensajeServiceImpl implements MensajeService {
         }
     }
 
+    /**
+     * Recupera una lista de mensajes intercambiados entre dos usuarios en una conversación específica,
+     * ordenados por fecha de envío.
+     *
+     * @param usuario1Id El identificador único del primer usuario.
+     * @param usuario2Id El identificador único del segundo usuario.
+     * @return Una lista de objetos {@code Mensaje} que representan los mensajes de la conversación.
+     * @throws PresentationException Si se produce un error al recuperar los mensajes.
+     */
     @Override
     public List<Mensaje> getMensajesByConversacion(String usuario1Id, String usuario2Id) {
         try {
@@ -54,8 +71,15 @@ public class MensajeServiceImpl implements MensajeService {
         }
     }
 
+    /**
+     * Genera un ID de conversación único ordenando alfabéticamente dos ID de usuario y concatenándolos con un guion bajo.
+     *
+     * @param id1 El primer ID de usuario que se incluirá en el ID de conversación.
+     * @param id2 El segundo ID de usuario que se incluirá en el ID de conversación.
+     * @return Un ID de conversación único formado por la combinación de los dos ID de usuario en orden alfabético, separados por un guion bajo.
+     */
     private String generarIdConversacion(String id1, String id2) {
-        // Creamos un ID único ordenando los IDs alfabéticamente
+        //  ID único ordenando los IDs alfabéticamente
         return id1.compareTo(id2) < 0 ? id1 + "_" + id2 : id2 + "_" + id1;
     }
 
