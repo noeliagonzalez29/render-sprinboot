@@ -1,9 +1,6 @@
 package com.proyecto.ProyectoConectacare.controllers;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.*;
 import com.proyecto.ProyectoConectacare.dto.ClienteDTO;
 import com.proyecto.ProyectoConectacare.dto.TrabajadorDTO;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
@@ -199,6 +196,25 @@ public class UsuariosController {
             return ResponseEntity.ok(usuario);
         } catch (FirebaseAuthException e) {
             throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);
+        }
+    }
+    /**
+     * Verifica si un correo electrónico ya está registrado en Firebase Authentication.
+     *
+     * @param email Correo electrónico a verificar
+     * @return true si ya existe, false si no
+     */
+    @GetMapping("/email-existe")
+    public ResponseEntity<Boolean> verificarEmail(@RequestParam String email) {
+        try {
+            UserRecord userRecord = firebaseAuth.getUserByEmail(email);
+            return ResponseEntity.ok(true);
+        } catch (FirebaseAuthException e) {
+            if (e.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
+                return ResponseEntity.ok(false);
+            }else {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
         }
     }
 
