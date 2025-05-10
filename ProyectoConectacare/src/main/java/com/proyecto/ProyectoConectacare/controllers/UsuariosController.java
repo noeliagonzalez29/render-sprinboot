@@ -204,17 +204,31 @@ public class UsuariosController {
      * @param email Correo electrónico a verificar
      * @return true si ya existe, false si no
      */
-    @GetMapping("/email-existe")
-    public ResponseEntity<Boolean> verificarEmail(@RequestParam String email) {
+
+    @GetMapping("/email-existe") // Endpoint ahora público
+    public ResponseEntity<Map<String, Object>> verificarEmail(@RequestParam String email) {
         try {
-            UserRecord userRecord = firebaseAuth.getUserByEmail(email);
-            return ResponseEntity.ok(true);
+            UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
+            // Si no lanza excepción, el email existe
+            return ResponseEntity.ok(Map.of("existe", true));
         } catch (FirebaseAuthException e) {
-            if (e.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
-                return ResponseEntity.ok(false);
-            }else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            // Comprueba los códigos de error exactos que devuelve tu versión del SDK de Admin de Firebase
+            if ("NOT_FOUND".equalsIgnoreCase(String.valueOf(e.getErrorCode())) ||
+                    "user-not-found".equalsIgnoreCase(String.valueOf(e.getErrorCode())) ||
+                    "USER_NOT_FOUND".equalsIgnoreCase(String.valueOf(e.getErrorCode()))) { // Algunas variaciones comunes
+                // Email no existe
+                return ResponseEntity.ok(Map.of("existe", false));
             }
+            // Otro error de Firebase al intentar buscar el email
+            System.err.println("Error verificando email con Firebase Admin SDK: " + e.getMessage() + " (Código: " + e.getErrorCode() + ")");
+            // Devolver un error genérico para no exponer detalles internos
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", true, "mensaje", "Error al verificar el email"));
+        } catch (Exception e) {
+            // Captura cualquier otra excepción inesperada
+            System.err.println("Error inesperado verificando email: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", true, "mensaje", "Error interno del servidor"));
         }
     }
 

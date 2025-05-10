@@ -69,14 +69,15 @@ public class SecurityConfig {
 
                 // Autorización de requests
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(String.valueOf(HttpMethod.POST), "/usuarios/cliente").permitAll()
-                        .requestMatchers(String.valueOf(HttpMethod.POST), "/usuarios/trabajador").permitAll()
+                       // .requestMatchers(String.valueOf(HttpMethod.POST), "/usuarios/cliente").permitAll()
+                      //  .requestMatchers(String.valueOf(HttpMethod.POST), "/usuarios/trabajador").permitAll()
                         .requestMatchers(
                                 "/api/public/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+                        .requestMatchers(String.valueOf(HttpMethod.GET), "/usuarios/email-existe").permitAll()
                         .requestMatchers("/admin/**").authenticated()
                         .anyRequest().authenticated()
                 )
