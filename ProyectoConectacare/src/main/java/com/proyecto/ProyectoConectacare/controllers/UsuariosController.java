@@ -55,7 +55,7 @@ public class UsuariosController {
 
         try {
 
-            String uid = (String) request.getAttribute("firebaseUserId"); // UID verificado por el filtro
+            String uid = (String) request.getAttribute("firebaseUserId");
 
             if (uid == null) {
                 logger.error("UID de Firebase no encontrado en la solicitud para /cliente");
@@ -67,10 +67,7 @@ public class UsuariosController {
             try {
                 usuarioExistente = usuarioService.getUsuarioById(uid);
             } catch (Exception e) {
-                // Si getUsuarioById lanza una excepción específica para "no encontrado" que no sea PresentationException,
-                // podrías querer atraparla aquí y tratarla como usuarioExistente = null;
-                // Por ahora, si lanza cualquier excepción, la trataremos como un problema.
-                // Si tu servicio devuelve null, no entrará aquí.
+
                 logger.warn("Excepción al buscar usuario con UID {} en BD local: {}", uid, e.getMessage());
             }
 

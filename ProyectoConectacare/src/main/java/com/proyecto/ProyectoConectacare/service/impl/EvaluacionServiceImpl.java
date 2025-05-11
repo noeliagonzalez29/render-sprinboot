@@ -5,6 +5,7 @@ import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Evaluacion;
+import com.proyecto.ProyectoConectacare.model.Usuario;
 import com.proyecto.ProyectoConectacare.service.EvaluacionService;
 
 import org.springframework.http.HttpStatus;
@@ -84,6 +85,29 @@ public class EvaluacionServiceImpl implements EvaluacionService {
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new PresentationException("Error al obtener valoraciones", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public boolean existeEvaluacionPorSolicitud(String solicitudId) {
+        List<Evaluacion> todas = getAllEvaluaciones();
+        for (Evaluacion evaluacion : todas) {
+            if (evaluacion.getSolicitudId().equals(solicitudId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public List<Evaluacion> getAllEvaluaciones() {
+        try {
+            return db.collection(COLECCION).get().get().getDocuments()
+                    .stream()
+                    .map(doc -> doc.toObject(Evaluacion.class))
+                    .collect(Collectors.toList());
+        } catch (InterruptedException | ExecutionException e) {
+            throw new PresentationException("Error al obtener las evaluaciones", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

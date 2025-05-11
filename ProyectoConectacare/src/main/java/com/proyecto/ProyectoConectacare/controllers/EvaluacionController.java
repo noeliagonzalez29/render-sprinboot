@@ -113,5 +113,10 @@ public class EvaluacionController {
             throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);
         }
     }
+    @GetMapping("/evaluada/{solicitudId}")
+    public ResponseEntity<Boolean> estaEvaluada(@PathVariable String solicitudId) {
+        boolean evaluada = evaluacionService.existeEvaluacionPorSolicitud(solicitudId);
+        return ResponseEntity.ok(evaluada);
+    }
 
 }
