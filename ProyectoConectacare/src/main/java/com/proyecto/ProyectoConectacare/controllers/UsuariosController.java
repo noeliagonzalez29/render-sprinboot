@@ -215,7 +215,7 @@ public class UsuariosController {
             // Comprueba los códigos de error exactos que devuelve tu versión del SDK de Admin de Firebase
             if ("NOT_FOUND".equalsIgnoreCase(String.valueOf(e.getErrorCode())) ||
                     "user-not-found".equalsIgnoreCase(String.valueOf(e.getErrorCode())) ||
-                    "USER_NOT_FOUND".equalsIgnoreCase(String.valueOf(e.getErrorCode()))) { // Algunas variaciones comunes
+                    "USER_NOT_FOUND".equalsIgnoreCase(String.valueOf(e.getErrorCode()))) {
                 // Email no existe
                 return ResponseEntity.ok(Map.of("existe", false));
             }

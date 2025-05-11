@@ -1,10 +1,11 @@
 package com.proyecto.ProyectoConectacare.config;
 
 
-import com.google.cloud.storage.HttpMethod;
+
 import com.proyecto.ProyectoConectacare.security.FirebaseFiltroAutenticacion;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -69,15 +70,15 @@ public class SecurityConfig {
 
                 // Autorización de requests
                 .authorizeHttpRequests(auth -> auth
-                       // .requestMatchers(String.valueOf(HttpMethod.POST), "/usuarios/cliente").permitAll()
-                      //  .requestMatchers(String.valueOf(HttpMethod.POST), "/usuarios/trabajador").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios/cliente").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios/trabajador").permitAll()
                         .requestMatchers(
                                 "/api/public/**",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .requestMatchers(String.valueOf(HttpMethod.GET), "/usuarios/email-existe").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/usuarios/email-existe").permitAll()
                         .requestMatchers("/admin/**").authenticated()
                         .anyRequest().authenticated()
                 )
@@ -93,7 +94,8 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("https://proyectoconectacare.web.app",
-                "https://proyectoconectacare.firebaseapp.com"));
+                "https://proyectoconectacare.firebaseapp.com",
+                "http://localhost:4200" ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
