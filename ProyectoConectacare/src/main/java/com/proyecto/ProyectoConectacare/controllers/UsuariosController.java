@@ -58,14 +58,28 @@ public class UsuariosController {
             String uid = (String) request.getAttribute("firebaseUserId"); // UID verificado por el filtro
 
             if (uid == null) {
-                // Esto no debería pasar si el filtro funcionó y la ruta es autenticada
-                throw new PresentationException("UID de Firebase no encontrado en la solicitud", HttpStatus.INTERNAL_SERVER_ERROR);
+                logger.error("UID de Firebase no encontrado en la solicitud para /cliente");
+                throw new PresentationException("UID de Firebase no encontrado en la solicitud. Contacte al administrador.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            logger.info("UID de Firebase obtenido del request: {}", uid);
+
+             Usuario usuarioExistente = null;
+            try {
+                usuarioExistente = usuarioService.getUsuarioById(uid);
+            } catch (Exception e) {
+                // Si getUsuarioById lanza una excepción específica para "no encontrado" que no sea PresentationException,
+                // podrías querer atraparla aquí y tratarla como usuarioExistente = null;
+                // Por ahora, si lanza cualquier excepción, la trataremos como un problema.
+                // Si tu servicio devuelve null, no entrará aquí.
+                logger.warn("Excepción al buscar usuario con UID {} en BD local: {}", uid, e.getMessage());
             }
 
-            // Verificar si ya existe un usuario con este UID en tu BD (doble chequeo o si permites actualizar)
-            if (usuarioService.getUsuarioById(uid) != null) {
+            if (usuarioExistente != null) {
+                logger.warn("El perfil para el usuario con UID {} ya existe en nuestros sistemas.", uid);
                 throw new PresentationException("El perfil para este usuario (UID) ya existe en nuestros sistemas.", HttpStatus.CONFLICT);
             }
+
+            logger.info("Perfil para UID {} no existe en BD local, procediendo a crear.", uid);
 
             // Crear objeto Usuario para Firestore usando el UID obtenido.
             Usuario usuario = new Usuario();
@@ -102,16 +116,28 @@ public class UsuariosController {
      */
     @PostMapping("/trabajador")
     public ResponseEntity<Usuario> registrarTrabajador(@Valid @RequestBody TrabajadorDTO trabajadorDTO,  HttpServletRequest request){
-
+        logger.info("Intentando registrar perfil de trabajador para email: {}", trabajadorDTO.getEmail());
         try {
             String uid = (String) request.getAttribute("firebaseUserId");
             if (uid == null) {
-                throw new PresentationException("UID de Firebase no encontrado en la solicitud", HttpStatus.INTERNAL_SERVER_ERROR);
+                logger.error("UID de Firebase no encontrado en la solicitud para /trabajador");
+                throw new PresentationException("UID de Firebase no encontrado en la solicitud. Contacte al administrador.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            logger.info("UID de Firebase obtenido del request: {}", uid);
+
+            Usuario usuarioExistente = null;
+            try {
+                usuarioExistente = usuarioService.getUsuarioById(uid);
+            } catch (Exception e) {
+                logger.warn("Excepción al buscar trabajador con UID {} en BD local: {}", uid, e.getMessage());
             }
 
-            if (usuarioService.getUsuarioById(uid) != null) {
-                throw new PresentationException("El perfil para este usuario (UID) ya existe en nuestros sistemas.", HttpStatus.CONFLICT);
+            if (usuarioExistente != null) {
+                logger.warn("El perfil para el trabajador con UID {} ya existe.", uid);
+                throw new PresentationException("El perfil para este usuario (UID) ya existe.", HttpStatus.CONFLICT);
             }
+
+            logger.info("Perfil para trabajador UID {} no existe, procediendo a crear.", uid);
 
             // 2. Crear objeto Usuario para Firestore
             Usuario usuario = new Usuario();
