@@ -9,7 +9,11 @@ import com.proyecto.ProyectoConectacare.model.Rol;
 import com.proyecto.ProyectoConectacare.model.Usuario;
 import com.proyecto.ProyectoConectacare.service.LogEstadisticaService;
 import com.proyecto.ProyectoConectacare.service.UsuarioService;
+import com.proyecto.ProyectoConectacare.service.impl.AdminServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +28,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/usuarios")
 public class UsuariosController {
+    private static final Logger logger = LoggerFactory.getLogger(AdminServiceImpl.class);
     private final UsuarioService usuarioService;
     private final FirebaseAuth firebaseAuth;
     private final LogEstadisticaService logEstadisticasService;
@@ -41,22 +46,27 @@ public class UsuariosController {
      * en la base de datos de Firestore y le asigna el rol CLIENTE.
      *
      * @param clienteDTO Objeto que contiene los datos del cliente, como nombre, correo electrónico, dirección, etc.
-     * @param token Token de autorización con el formato "Bearer <token>" utilizado para validar
-     * e identificar al usuario en Firebase.
+     *
      * @return Una ResponseEntity que contiene el objeto Usuario creado y el código de estado HTTP 201 (CREATED),
      * o una excepción con el estado HTTP correspondiente en caso de errores durante el registro.
      */
     @PostMapping("/cliente")
-    public ResponseEntity<Usuario> registrarCliente(@Valid @RequestBody ClienteDTO clienteDTO,  @RequestHeader("Authorization") String token)  {
+    public ResponseEntity<Usuario> registrarCliente(@Valid @RequestBody ClienteDTO clienteDTO,  HttpServletRequest request)  {
 
         try {
 
-            if (token.startsWith("Bearer ")) {
-                token = token.substring(7);
+            String uid = (String) request.getAttribute("firebaseUserId"); // UID verificado por el filtro
+
+            if (uid == null) {
+                // Esto no debería pasar si el filtro funcionó y la ruta es autenticada
+                throw new PresentationException("UID de Firebase no encontrado en la solicitud", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            // Verificar el token y extraer el UID.
-            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
-            String uid = decodedToken.getUid();
+
+            // Verificar si ya existe un usuario con este UID en tu BD (doble chequeo o si permites actualizar)
+            if (usuarioService.getUsuarioById(uid) != null) {
+                throw new PresentationException("El perfil para este usuario (UID) ya existe en nuestros sistemas.", HttpStatus.CONFLICT);
+            }
+
             // Crear objeto Usuario para Firestore usando el UID obtenido.
             Usuario usuario = new Usuario();
             usuario.setId(uid);
@@ -70,12 +80,13 @@ public class UsuariosController {
             //  Guardar en Firestore
             Usuario usuarioGuardado = usuarioService.createUsuario(usuario);
             return new ResponseEntity<>(usuarioGuardado, HttpStatus.CREATED);
-        } catch (FirebaseAuthException e) {
+        } catch (PresentationException e) {
 
-            if (e.getErrorCode().equals("email-already-exists")) {
-                throw new PresentationException("El email ya está registrado", HttpStatus.BAD_REQUEST);
-            }
-            throw new PresentationException("Error al registrar usuario", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw e;
+        }catch (Exception e) { // Captura general para otros errores inesperados
+
+            logger.error("Error inesperado al registrar cliente: ", e);
+            throw new PresentationException("Error interno al registrar el perfil del cliente", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -85,22 +96,22 @@ public class UsuariosController {
      * lo guarda en la base de datos.
      *
      * @param trabajadorDTO El objeto de transferencia de datos que contiene los datos del usuario, como nombre, correo electrónico,
-     * disponibilidad, estudios, habilidades y experiencia.
-     * @param token El token de autorización proporcionado en el encabezado de la solicitud HTTP, utilizado para verificar la sesión del usuario y recuperar el UID de Firebase.
+     * disponibilidad, estudios, habilidades y experiencia
      * @return Una ResponseEntity que contiene el objeto Usuario creado y un estado HTTP de CREADO.
      * Si se produce algún error durante el proceso, se genera una excepción con el código de estado correspondiente.
      */
     @PostMapping("/trabajador")
-    public ResponseEntity<Usuario> registrarTrabajador(@Valid @RequestBody TrabajadorDTO trabajadorDTO, @RequestHeader("Authorization") String token){
+    public ResponseEntity<Usuario> registrarTrabajador(@Valid @RequestBody TrabajadorDTO trabajadorDTO,  HttpServletRequest request){
 
         try {
-            // 1. Extraer el token y quitar "Bearer " si es necesario.
-            if (token.startsWith("Bearer ")) {
-                token = token.substring(7);
+            String uid = (String) request.getAttribute("firebaseUserId");
+            if (uid == null) {
+                throw new PresentationException("UID de Firebase no encontrado en la solicitud", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            // 2. Verificar el token y extraer el UID.
-            FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
-            String uid = decodedToken.getUid();
+
+            if (usuarioService.getUsuarioById(uid) != null) {
+                throw new PresentationException("El perfil para este usuario (UID) ya existe en nuestros sistemas.", HttpStatus.CONFLICT);
+            }
 
             // 2. Crear objeto Usuario para Firestore
             Usuario usuario = new Usuario();
@@ -118,11 +129,11 @@ public class UsuariosController {
             // 3. Guardar en Firestore
             Usuario usuarioGuardado = usuarioService.createUsuario(usuario);
             return new ResponseEntity<>(usuarioGuardado, HttpStatus.CREATED);
-        } catch (FirebaseAuthException e) {
-            if (e.getErrorCode().equals("email-already-exists")) {
-                throw new PresentationException("El email ya está registrado", HttpStatus.BAD_REQUEST);
-            }
-            throw new PresentationException("Error al registrar usuario", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (PresentationException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error inesperado al registrar trabajador: ", e);
+            throw new PresentationException("Error interno al registrar el perfil del trabajador", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

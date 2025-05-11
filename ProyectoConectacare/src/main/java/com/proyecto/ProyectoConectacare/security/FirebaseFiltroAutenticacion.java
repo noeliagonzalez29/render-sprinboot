@@ -61,7 +61,8 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
             "/webjars",
             "/usuarios/email-existe"
     );
-
+    private static final String RUTA_REGISTRO_CLIENTE = "/usuarios/cliente";
+    private static final String RUTA_REGISTRO_TRABAJADOR = "/usuarios/trabajador";
     private final UsuarioService usuarioService;
 
     public FirebaseFiltroAutenticacion(UsuarioService usuarioService) {
@@ -71,7 +72,8 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain chain) throws IOException, ServletException {
+                                    FilterChain chain) throws IOException, ServletException {String path = request.getRequestURI().substring(request.getContextPath().length());
+        String method = request.getMethod();
 
         if (esRutaPublica(request)) {
             chain.doFilter(request, response);
@@ -87,7 +89,23 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
         try {
             FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(token);
             String uid = decoded.getUid();
+            request.setAttribute("firebaseUserId", uid);
+            boolean esRutaDeCreacionDePerfil =
+                    (RUTA_REGISTRO_CLIENTE.equals(path) && "POST".equalsIgnoreCase(method)) ||
+                            (RUTA_REGISTRO_TRABAJADOR.equals(path) && "POST".equalsIgnoreCase(method));
 
+            if (esRutaDeCreacionDePerfil) {
+                // Para la creación de perfil, solo necesitamos que el token de Firebase sea válido.
+                // No necesitamos que el usuario ya exista en nuestra BD.
+                // Creamos una autenticación simple con el UID y un rol genérico o sin roles si aún no se define.
+                // O, si el rol viene en los claims del token de Firebase (si lo configuras), podrías usarlo.
+                // Por ahora, solo autenticamos el UID.
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(uid, null, Collections.emptyList()); // Sin roles específicos aquí aún
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+                chain.doFilter(request, response);
+                return; // Importante: salimos después de manejar el caso de creación de perfil
+            }
             Optional<Usuario> optUsuario = Optional.ofNullable(usuarioService.getUsuarioById(uid));
             if (optUsuario.isEmpty()) {
                 enviarError(response, HttpServletResponse.SC_FORBIDDEN, "Usuario no encontrado");
@@ -110,6 +128,9 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
 
         } catch (FirebaseAuthException e) {
             enviarError(response, HttpServletResponse.SC_UNAUTHORIZED, "Token inválido: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error inesperado en el filtro de autenticación de Firebase: ", e);
+            enviarError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error interno del servidor durante la autenticación");
         }
     }
 
