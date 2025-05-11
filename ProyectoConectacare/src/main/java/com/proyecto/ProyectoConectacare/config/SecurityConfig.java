@@ -70,8 +70,8 @@ public class SecurityConfig {
 
                 // Autorización de requests
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.POST, "/usuarios/cliente").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/usuarios/trabajador").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/usuarios/cliente").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/usuarios/trabajador").authenticated()
                         .requestMatchers(
                                 "/api/public/**",
                                 "/swagger-ui/**",
