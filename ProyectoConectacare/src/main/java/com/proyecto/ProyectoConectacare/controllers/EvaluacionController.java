@@ -49,7 +49,8 @@ public class EvaluacionController {
         try {
             decodedToken = firebaseAuth.verifyIdToken(token.replace("Bearer ", ""));
         } catch (FirebaseAuthException e) {
-            throw new RuntimeException(e);
+           // throw new RuntimeException(e);
+            throw new PresentationException("Token inválido o expirado", HttpStatus.UNAUTHORIZED);
         }
 
         // Obtener la solicitud relacionada
