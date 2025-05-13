@@ -1,8 +1,6 @@
 package com.proyecto.ProyectoConectacare.service.impl;
 
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.*;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Evaluacion;
 import com.proyecto.ProyectoConectacare.model.Usuario;
@@ -90,13 +88,15 @@ public class EvaluacionServiceImpl implements EvaluacionService {
 
     @Override
     public boolean existeEvaluacionPorSolicitud(String solicitudId) {
-        List<Evaluacion> todas = getAllEvaluaciones();
-        for (Evaluacion evaluacion : todas) {
-            if (evaluacion.getSolicitudId().equals(solicitudId)) {
-                return true;
-            }
+        // Consulta directa en Firestore para evitar traer todas las evaluaciones
+        CollectionReference evaluacionesRef =db.collection(COLECCION);
+        Query query = evaluacionesRef.whereEqualTo("solicitudId", solicitudId).limit(1);
+
+        try {
+            return !query.get().get().isEmpty(); // Si hay al menos 1 documento, retorna true
+        } catch (Exception e) {
+            throw new RuntimeException("Error al verificar evaluación", e);
         }
-        return false;
     }
 
     @Override
