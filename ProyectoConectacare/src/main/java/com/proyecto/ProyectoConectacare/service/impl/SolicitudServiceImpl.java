@@ -3,6 +3,7 @@ package com.proyecto.ProyectoConectacare.service.impl;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -25,7 +26,9 @@ import java.util.stream.Collectors;
 public class SolicitudServiceImpl implements SolicitudService {
     private static final String COLECCION = "solicitudes";
     private final Firestore db;
-
+    private static final String COLECCION_ANUNCIOS = "anuncios";
+    private static final String COLECCION_EVALUACIONES = "evaluaciones";
+    private static final String COLECCION_USUARIOS = "usuarios";
 
     public SolicitudServiceImpl(Firestore db) {
         this.db = db;
@@ -146,62 +149,81 @@ public class SolicitudServiceImpl implements SolicitudService {
      * Si no se encuentran solicitudes, se devuelve una lista vacía.
      * @throws PresentationException Si se produce algún error durante la recuperación de la base de datos o la asignación de datos.
      */
+    @Override
     public List<SolicitudConTrabajadorDTO> getSolicitudesByClienteId(String clienteId) {
         try {
-            List<String> misAnunciosIds = db.collection("anuncios")
+            // 1. Obtener los IDs de los anuncios del cliente
+            List<String> misAnunciosIds = db.collection(COLECCION_ANUNCIOS)
                     .whereEqualTo("clienteId", clienteId)
                     .get().get().getDocuments()
                     .stream()
                     .map(DocumentSnapshot::getId)
-                    .toList();
+                    .collect(Collectors.toList()); // Usar collect(Collectors.toList()) para compatibilidad
 
-            if (misAnunciosIds.isEmpty()) return new ArrayList<>();
+            if (misAnunciosIds.isEmpty()) {
+                return new ArrayList<>();
+            }
 
-            return db.collection("solicitudes")
+            // 2. Obtener todas las solicitudes para esos anuncios
+            List<QueryDocumentSnapshot> solicitudDocumentos = db.collection(COLECCION)
                     .whereIn("anuncioId", misAnunciosIds)
-                    .get().get().getDocuments()
-                    .stream()
-                    .map(doc -> {
-                        Solicitud solicitud = doc.toObject(Solicitud.class);
-                        solicitud.setId(doc.getId());
+                    .get().get().getDocuments();
 
-                        // Verificar si existe evaluación (nuevo)
-                        boolean existeEvaluacion = false;
-                        try {
-                            existeEvaluacion = !db.collection("evaluaciones")
-                                    .whereEqualTo("solicitudId", solicitud.getId())
-                                    .get().get().isEmpty();
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        } catch (ExecutionException e) {
-                            throw new RuntimeException(e);
-                        }
+            List<SolicitudConTrabajadorDTO> dtosNoEvaluadas = new ArrayList<>();
 
-                        // Obtener datos del trabajador
-                        DocumentSnapshot trabajadorDoc = null;
-                        try {
-                            trabajadorDoc = db.collection("usuarios")
-                                    .document(solicitud.getTrabajadorId())
-                                    .get().get();
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        } catch (ExecutionException e) {
-                            throw new RuntimeException(e);
-                        }
+            for (QueryDocumentSnapshot doc : solicitudDocumentos) {
+                Solicitud solicitud = doc.toObject(Solicitud.class);
+                solicitud.setId(doc.getId()); // Asegurar que el ID esté presente
 
-                        // Mapear a DTO
-                        SolicitudConTrabajadorDTO dto = mapToDto(solicitud, trabajadorDoc);
-                        dto.setCompletado(solicitud.isCompletado());
-                        dto.setEvaluacionExistente(existeEvaluacion);
-                        return dto;
-                    })
-                    .collect(Collectors.toList());
+                // 3. Verificar si existe una evaluación para esta solicitud
+                boolean existeEvaluacion;
+                try {
+                    // Hacemos una consulta a la colección 'evaluaciones' para ver si hay algún
+                    // documento con el 'solicitudId' actual. Usamos limit(1) porque solo
+                    // necesitamos saber si existe al menos uno.
+                    existeEvaluacion = !db.collection(COLECCION_EVALUACIONES)
+                            .whereEqualTo("solicitudId", solicitud.getId())
+                            .limit(1)
+                            .get().get().isEmpty();
+                } catch (InterruptedException | ExecutionException e) {
+                    // Si hay un error al verificar la evaluación, por precaución, podríamos
+                    // omitir esta solicitud o loguear y decidir. Aquí la omitimos para
+                    // evitar mostrar una evaluada por error.
+                    System.err.println("Error al verificar evaluación para solicitud " + solicitud.getId() + ": " + e.getMessage() + ". Omitiendo.");
+                    continue;
+                }
 
-        } catch (Exception e) {
-            throw new PresentationException("Error al obtener solicitudes del cliente", HttpStatus.INTERNAL_SERVER_ERROR);
+                // 4. Si ya existe una evaluación, saltamos esta solicitud
+                if (existeEvaluacion) {
+                    continue;
+                }
+
+                // 5. Si no hay evaluación, procedemos a obtener datos del trabajador y crear el DTO
+                DocumentSnapshot trabajadorDoc = null;
+                if (solicitud.getTrabajadorId() != null && !solicitud.getTrabajadorId().isEmpty()){
+                    try {
+                        trabajadorDoc = db.collection(COLECCION_USUARIOS)
+                                .document(solicitud.getTrabajadorId())
+                                .get().get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        System.err.println("Error obteniendo datos del trabajador " + solicitud.getTrabajadorId() + ": " + e.getMessage());
+                        // trabajadorDoc permanecerá null, mapToDto debe manejarlo
+                    }
+                }
+
+
+                SolicitudConTrabajadorDTO dto = mapToDto(solicitud, trabajadorDoc);
+                dto.setCompletado(solicitud.isCompletado()); // isCompletado() es el getter para boolean
+                dto.setEvaluacionExistente(false); // Ya filtramos, así que sabemos que no existe evaluación
+
+                dtosNoEvaluadas.add(dto);
+            }
+            return dtosNoEvaluadas;
+
+        } catch (Exception e) { // Captura más general para la lógica principal
+            throw new PresentationException("Error al obtener solicitudes del cliente: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
     /**
      * Asigna una Solicitud y su DocumentSnapshot asociado de un trabajador a una SolicitudConTrabajadorDTO.
      *
