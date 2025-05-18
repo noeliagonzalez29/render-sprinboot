@@ -35,37 +35,76 @@ public class EvaluacionServiceImpl implements EvaluacionService {
      */
     @Override
     public Evaluacion createEvaluacion(Evaluacion evaluacion) {
+        DocumentReference docRef = null; // Para tener acceso en el catch si es necesario
         try {
-            DocumentReference docRef = db.collection(COLECCION).document();
+            docRef = db.collection(COLECCION).document();
             evaluacion.setId(docRef.getId());
-            docRef.set(evaluacion).get();
+            docRef.set(evaluacion).get(); // Espera a que la evaluación se cree
+
+            System.out.println("DEBUG Servicio: Evaluación creada con ID: " + evaluacion.getId());
+
+            // Llamar a marcar el chat DESPUÉS de confirmar la creación de la evaluación
             marcarChatComoEvaluadoTrasCreacion(evaluacion.getClienteId(), evaluacion.getTrabajadorId(), evaluacion.getSolicitudId());
+
             return evaluacion;
         } catch (InterruptedException | ExecutionException e) {
-            throw new PresentationException("Error al crear evaluación", HttpStatus.INTERNAL_SERVER_ERROR);
+            // Es importante loguear qué operación falló
+            String operation = (docRef != null && evaluacion.getId() != null) ? "marcar chat" : "crear evaluación";
+            System.err.println("ERROR CRÍTICO en createEvaluacion durante " + operation + ": " + e.getMessage());
+            e.printStackTrace();
+            throw new PresentationException("Error durante la creación de la evaluación o tareas posteriores", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) { // Otra captura genérica por si acaso
+            System.err.println("ERROR INESPERADO en createEvaluacion: " + e.getMessage());
+            e.printStackTrace();
+            throw new PresentationException("Error inesperado durante el proceso de evaluación", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     private void marcarChatComoEvaluadoTrasCreacion(String clienteId, String trabajadorId, String solicitudIdRelacionada) {
         if (clienteId == null || trabajadorId == null) {
-            System.err.println("ClienteId o TrabajadorId es null. No se puede marcar el chat para la solicitud: " + solicitudIdRelacionada);
+            System.err.println("ERROR CRÍTICO en Servicio: ClienteId o TrabajadorId es null. No se puede marcar el chat para la solicitud: " + solicitudIdRelacionada);
             return;
         }
+        System.out.println("DEBUG Servicio: Intentando marcar chat. ClienteID: " + clienteId + ", TrabajadorID: " + trabajadorId + ", SolicitudID: " + solicitudIdRelacionada);
+
         try {
-            // Recrear el ID del chat como lo haces en el frontend (ordenado)
             String chatId = Arrays.stream(new String[]{clienteId, trabajadorId})
                     .sorted()
                     .collect(Collectors.joining("_"));
+            System.out.println("DEBUG Servicio: ChatID construido: " + chatId);
 
             DocumentReference chatRef = db.collection(COLECCION_CHATS).document(chatId);
             Map<String, Object> updates = new HashMap<>();
-            updates.put("evaluadoPorCliente", true);
+            updates.put("evaluadoPorCliente", true); // Booleano
             updates.put("solicitudEvaluadaId", solicitudIdRelacionada);
 
-            System.out.println("Servicio: Chat " + chatId + " marcado como evaluadoPorCliente para solicitud " + solicitudIdRelacionada);
+            System.out.println("DEBUG Servicio: Preparado para actualizar chatRef (" + chatRef.getPath() + ") con datos: " + updates);
 
-        } catch (Exception e) {
-            System.err.println("Error en servicio al marcar el chat para solicitud " + solicitudIdRelacionada + " como evaluado: " + e.getMessage());
+            // ApiFuture<WriteResult> writeResultApiFuture = chatRef.update(updates);
+            // WriteResult writeResult = writeResultApiFuture.get(); // Esto espera y lanza excepción si falla
 
+            // Alternativa más simple para update, .get() al final es para esperar.
+            chatRef.update(updates).get();
+
+            System.out.println("ÉXITO Servicio: Chat " + chatId + " ACTUALIZADO en Firestore para solicitud " + solicitudIdRelacionada + ". Update time: " + new java.util.Date()); // Añadir timestamp para diferenciar
+
+            // Para verificar, intenta leer el campo inmediatamente después (SOLO PARA DEPURACIÓN)
+            // DocumentSnapshot snapshot = chatRef.get().get();
+            // if (snapshot.exists() && snapshot.contains("evaluadoPorCliente")) {
+            //     System.out.println("DEBUG Servicio: Verificación POST-ESCRITURA - evaluadoPorCliente: " + snapshot.getBoolean("evaluadoPorCliente"));
+            // } else {
+            //     System.err.println("ERROR CRÍTICO en Servicio: Verificación POST-ESCRITURA - campo evaluadoPorCliente NO encontrado o documento no existe.");
+            // }
+
+        } catch (ExecutionException e) {
+            System.err.println("ERROR CRÍTICO en Servicio (ExecutionException) al marcar el chat para solicitud " + solicitudIdRelacionada + " como evaluado: " + e.getMessage());
+            e.printStackTrace(); // Imprime la traza completa
+        } catch (InterruptedException e) {
+            System.err.println("ERROR CRÍTICO en Servicio (InterruptedException) al marcar el chat para solicitud " + solicitudIdRelacionada + " como evaluado: " + e.getMessage());
+            Thread.currentThread().interrupt(); // Restaura el estado de interrupción
+            e.printStackTrace();
+        } catch (Exception e) { // Captura genérica para otros posibles errores
+            System.err.println("ERROR CRÍTICO en Servicio (Exception Genérica) al marcar el chat para solicitud " + solicitudIdRelacionada + " como evaluado: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     /**
