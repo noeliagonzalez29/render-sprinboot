@@ -69,7 +69,7 @@ public class EvaluacionController {
         evaluacion.setTrabajadorId(solicitud.getTrabajadorId());
 
         Evaluacion evaluacionCreada = evaluacionService.createEvaluacion(evaluacion);
-        return new ResponseEntity<>(evaluacionService.createEvaluacion(evaluacion), HttpStatus.CREATED);
+        return new ResponseEntity<>(evaluacionCreada, HttpStatus.CREATED);
     }
     /**
      * Recupera una evaluación por su identificador único.
