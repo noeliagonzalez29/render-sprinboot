@@ -9,13 +9,17 @@ import com.proyecto.ProyectoConectacare.service.EvaluacionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Service
 public class EvaluacionServiceImpl implements EvaluacionService {
     private static final String COLECCION = "evaluaciones";
+    private static final String COLECCION_CHATS = "chats";
     private final Firestore db;
 
     public EvaluacionServiceImpl(Firestore db) {
@@ -35,12 +39,35 @@ public class EvaluacionServiceImpl implements EvaluacionService {
             DocumentReference docRef = db.collection(COLECCION).document();
             evaluacion.setId(docRef.getId());
             docRef.set(evaluacion).get();
+            marcarChatComoEvaluadoTrasCreacion(evaluacion.getClienteId(), evaluacion.getTrabajadorId(), evaluacion.getSolicitudId());
             return evaluacion;
         } catch (InterruptedException | ExecutionException e) {
             throw new PresentationException("Error al crear evaluación", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    private void marcarChatComoEvaluadoTrasCreacion(String clienteId, String trabajadorId, String solicitudIdRelacionada) {
+        if (clienteId == null || trabajadorId == null) {
+            System.err.println("ClienteId o TrabajadorId es null. No se puede marcar el chat para la solicitud: " + solicitudIdRelacionada);
+            return;
+        }
+        try {
+            // Recrear el ID del chat como lo haces en el frontend (ordenado)
+            String chatId = Arrays.stream(new String[]{clienteId, trabajadorId})
+                    .sorted()
+                    .collect(Collectors.joining("_"));
 
+            DocumentReference chatRef = db.collection(COLECCION_CHATS).document(chatId);
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("evaluadoPorCliente", true);
+            updates.put("solicitudEvaluadaId", solicitudIdRelacionada);
+
+            System.out.println("Servicio: Chat " + chatId + " marcado como evaluadoPorCliente para solicitud " + solicitudIdRelacionada);
+
+        } catch (Exception e) {
+            System.err.println("Error en servicio al marcar el chat para solicitud " + solicitudIdRelacionada + " como evaluado: " + e.getMessage());
+
+        }
+    }
     /**
      * Recupera un objeto de evaluación de la base de datos mediante su identificador único.
      *

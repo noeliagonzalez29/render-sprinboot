@@ -211,7 +211,6 @@ public class SolicitudServiceImpl implements SolicitudService {
                     }
                 }
 
-
                 SolicitudConTrabajadorDTO dto = mapToDto(solicitud, trabajadorDoc);
                 dto.setCompletado(solicitud.isCompletado()); // isCompletado() es el getter para boolean
                 dto.setEvaluacionExistente(false); // Ya filtramos, así que sabemos que no existe evaluación

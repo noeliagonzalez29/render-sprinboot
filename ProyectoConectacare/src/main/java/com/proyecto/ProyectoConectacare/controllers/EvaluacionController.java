@@ -68,6 +68,7 @@ public class EvaluacionController {
         evaluacion.setClienteId(decodedToken.getUid());
         evaluacion.setTrabajadorId(solicitud.getTrabajadorId());
 
+        Evaluacion evaluacionCreada = evaluacionService.createEvaluacion(evaluacion);
         return new ResponseEntity<>(evaluacionService.createEvaluacion(evaluacion), HttpStatus.CREATED);
     }
     /**
