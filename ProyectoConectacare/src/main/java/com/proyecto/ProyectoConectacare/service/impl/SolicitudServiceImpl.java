@@ -1,9 +1,6 @@
 package com.proyecto.ProyectoConectacare.service.impl;
 
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.*;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -287,17 +284,50 @@ public class SolicitudServiceImpl implements SolicitudService {
     public Solicitud actualizarEstadoSolicitud(String solicitudId, EstadoSolicitud nuevoEstado) {
         try {
             DocumentReference docRef = db.collection(COLECCION).document(solicitudId);
+            DocumentSnapshot solicitudSnapshot = docRef.get().get(); // Espera a que se obtenga el snapshot
+            if (!solicitudSnapshot.exists()) {
 
+                throw new PresentationException("Solicitud con ID " + solicitudId + " no encontrada para actualizar estado.", HttpStatus.NOT_FOUND);
+            }
+            Solicitud solicitud = solicitudSnapshot.toObject(Solicitud.class);
+            if (solicitud == null) {
+                throw new PresentationException("Error al mapear la solicitud desde Firestore para ID " + solicitudId, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            solicitud.setId(solicitudSnapshot.getId());
             Map<String, Object> updates = new HashMap<>();
             updates.put("estado", nuevoEstado);
+            docRef.update(updates).get(); // Actualiza el estado de la solicitud
 
-            docRef.update(updates).get(); // Espera que se aplique
+            if (nuevoEstado == EstadoSolicitud.ACEPTADA) {
+                String clienteId = solicitud.getClienteId();
+                String trabajadorId = solicitud.getTrabajadorId();
 
-            DocumentSnapshot snapshot = docRef.get().get();
-            return snapshot.toObject(Solicitud.class);
+                if (clienteId != null && trabajadorId != null) {
+                    String chatId = Arrays.stream(new String[]{clienteId, trabajadorId})
+                            .sorted()
+                            .collect(Collectors.joining("_"));
+                    DocumentReference chatRef = db.collection("chats").document(chatId);
+
+                    Map<String, Object> chatUpdates = new HashMap<>();
+                    chatUpdates.put("participantes", Arrays.asList(clienteId, trabajadorId)); // Asegura participantes
+
+                    chatUpdates.put("evaluadoPorCliente", false);
+
+                    chatUpdates.put("solicitudEvaluadaId", null);
+
+                    chatRef.set(chatUpdates, SetOptions.merge()).get();
+                    System.out.println("Servicio: Chat " + chatId + " asegurado/reactivado para nueva solicitud ACEPTADA: " + solicitudId);
+                }
+            }
+
+            solicitud.setEstado(nuevoEstado);
+            return solicitud;
 
         } catch (InterruptedException | ExecutionException e) {
             throw new PresentationException("Error al actualizar estado de solicitud", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            throw new PresentationException("Error inesperado al actualizar estado de solicitud: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
