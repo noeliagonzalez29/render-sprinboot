@@ -52,32 +52,24 @@ public class UsuariosController {
      */
     @PostMapping("/cliente")
     public ResponseEntity<Usuario> registrarCliente(@Valid @RequestBody ClienteDTO clienteDTO,  HttpServletRequest request)  {
-
         try {
-
             String uid = (String) request.getAttribute("firebaseUserId");
-
             if (uid == null) {
                 logger.error("UID de Firebase no encontrado en la solicitud para /cliente");
                 throw new PresentationException("UID de Firebase no encontrado en la solicitud. Contacte al administrador.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             logger.info("UID de Firebase obtenido del request: {}", uid);
-
              Usuario usuarioExistente = null;
             try {
                 usuarioExistente = usuarioService.getUsuarioById(uid);
             } catch (Exception e) {
-
                 logger.warn("Excepción al buscar usuario con UID {} en BD local: {}", uid, e.getMessage());
             }
-
             if (usuarioExistente != null) {
                 logger.warn("El perfil para el usuario con UID {} ya existe en nuestros sistemas.", uid);
                 throw new PresentationException("El perfil para este usuario (UID) ya existe en nuestros sistemas.", HttpStatus.CONFLICT);
             }
-
             logger.info("Perfil para UID {} no existe en BD local, procediendo a crear.", uid);
-
             // Crear objeto Usuario para Firestore usando el UID obtenido.
             Usuario usuario = new Usuario();
             usuario.setId(uid);
@@ -87,7 +79,6 @@ public class UsuariosController {
             usuario.setApellido(clienteDTO.getApellido());
             usuario.setDireccion(clienteDTO.getDireccion());
             usuario.setNecesidades(clienteDTO.getNecesidades());
-
             //  Guardar en Firestore
             Usuario usuarioGuardado = usuarioService.createUsuario(usuario);
             return new ResponseEntity<>(usuarioGuardado, HttpStatus.CREATED);

@@ -67,7 +67,19 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
+                // AÑADE CSP AQUÍ ↓
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives(
+                                        "default-src 'self'; " +
+                                                "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com; https://cdn.jsdelivr.net;" +
+                                                "style-src 'self' 'unsafe-inline'; " +
+                                                "img-src 'self' data: https://firebasestorage.googleapis.com; " + // Firebase Storage
+                                                "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://proyectoconectacare.firebaseio.com;  wss://proyectoconectacare.firebaseio.com;" + // Firestore y Auth
+                                                "frame-src https://securetoken.googleapis.com;" // Para OAuth de Google
+                                )
+                        )
+                )
                 // Autorización de requests
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/usuarios/cliente").authenticated()

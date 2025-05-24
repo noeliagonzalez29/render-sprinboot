@@ -47,7 +47,7 @@ public class UsuarioServiceImpl implements UsuarioService {
             logEstadisticasService.registrarEvento(usuario, Evento.REGISTRO);
             return usuario;
         } catch (InterruptedException | ExecutionException e) {
-            logger.error("❌ Error guardando usuario en Firestore", e);
+            logger.error("Error guardando usuario en Firestore", e);
             throw new PresentationException("Error al crear usuario", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

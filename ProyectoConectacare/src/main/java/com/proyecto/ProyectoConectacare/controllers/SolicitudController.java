@@ -155,7 +155,7 @@ public class SolicitudController {
     @PutMapping("/{id}/estado")
     public ResponseEntity<Solicitud> actualizarEstado(@PathVariable String id, @RequestBody Map<String, String> body) {
         String estadoStr = body.get("estado");
-        EstadoSolicitud nuevoEstado = EstadoSolicitud.valueOf(estadoStr); // Ej: "ACEPTADA"
+        EstadoSolicitud nuevoEstado = EstadoSolicitud.valueOf(estadoStr);
         Solicitud actualizada = solicitudService.actualizarEstadoSolicitud(id, nuevoEstado);
         return ResponseEntity.ok(actualizada);
     }

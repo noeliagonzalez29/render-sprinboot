@@ -308,19 +308,14 @@ public class SolicitudServiceImpl implements SolicitudService {
                             .sorted()
                             .collect(Collectors.joining("_"));
                     DocumentReference chatRef = db.collection("chats").document(chatId);
-
                     Map<String, Object> chatUpdates = new HashMap<>();
                     chatUpdates.put("participantes", Arrays.asList(clienteId, trabajadorId)); // Asegura participantes
-
                     chatUpdates.put("evaluadoPorCliente", false);
-
                     chatUpdates.put("solicitudEvaluadaId", null);
-
                     chatRef.set(chatUpdates, SetOptions.merge()).get();
                     System.out.println("Servicio: Chat " + chatId + " asegurado/reactivado para nueva solicitud ACEPTADA: " + solicitudId);
                 }
             }
-
             solicitud.setEstado(nuevoEstado);
             return solicitud;
 
