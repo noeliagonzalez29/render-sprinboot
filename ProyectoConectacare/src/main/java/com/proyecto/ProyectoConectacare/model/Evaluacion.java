@@ -31,11 +31,12 @@ public class Evaluacion {
     private String clienteId;
     @Min(value = 1, message = "La calificación debe ser al menos 1")
     @Max(value = 5, message = "La calificación no puede ser mayor que 5")
-    private int estrellas; // Calificación de 1 a 5
+    private int estrellas;
     private String comentario;
     @ServerTimestamp
     private Date fechaEvaluacion;
-    private String solicitudId; // Nuevo campo
+    private String solicitudId;
+    private String nombreCliente;
 
     public Evaluacion() {
     }
@@ -92,5 +93,13 @@ public class Evaluacion {
 
     public void setFechaEvaluacion(Date fechaEvaluacion) {
         this.fechaEvaluacion = fechaEvaluacion;
+    }
+
+    public String getNombreCliente() {
+        return nombreCliente;
+    }
+
+    public void setNombreCliente(String nombreCliente) {
+        this.nombreCliente = nombreCliente;
     }
 }

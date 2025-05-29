@@ -9,10 +9,7 @@ import com.proyecto.ProyectoConectacare.service.EvaluacionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -77,34 +74,20 @@ public class EvaluacionServiceImpl implements EvaluacionService {
             updates.put("evaluadoPorCliente", true); // Booleano
             updates.put("solicitudEvaluadaId", solicitudIdRelacionada);
 
-            System.out.println("DEBUG Servicio: Preparado para actualizar chatRef (" + chatRef.getPath() + ") con datos: " + updates);
 
-            // ApiFuture<WriteResult> writeResultApiFuture = chatRef.update(updates);
-            // WriteResult writeResult = writeResultApiFuture.get(); // Esto espera y lanza excepción si falla
-
-            // Alternativa más simple para update, .get() al final es para esperar.
             chatRef.update(updates).get();
 
-            System.out.println("ÉXITO Servicio: Chat " + chatId + " ACTUALIZADO en Firestore para solicitud " + solicitudIdRelacionada + ". Update time: " + new java.util.Date()); // Añadir timestamp para diferenciar
 
-            // Para verificar, intenta leer el campo inmediatamente después (SOLO PARA DEPURACIÓN)
-            // DocumentSnapshot snapshot = chatRef.get().get();
-            // if (snapshot.exists() && snapshot.contains("evaluadoPorCliente")) {
-            //     System.out.println("DEBUG Servicio: Verificación POST-ESCRITURA - evaluadoPorCliente: " + snapshot.getBoolean("evaluadoPorCliente"));
-            // } else {
-            //     System.err.println("ERROR CRÍTICO en Servicio: Verificación POST-ESCRITURA - campo evaluadoPorCliente NO encontrado o documento no existe.");
-            // }
 
         } catch (ExecutionException e) {
             System.err.println("ERROR CRÍTICO en Servicio (ExecutionException) al marcar el chat para solicitud " + solicitudIdRelacionada + " como evaluado: " + e.getMessage());
-            e.printStackTrace(); // Imprime la traza completa
+
         } catch (InterruptedException e) {
             System.err.println("ERROR CRÍTICO en Servicio (InterruptedException) al marcar el chat para solicitud " + solicitudIdRelacionada + " como evaluado: " + e.getMessage());
-            Thread.currentThread().interrupt(); // Restaura el estado de interrupción
-            e.printStackTrace();
-        } catch (Exception e) { // Captura genérica para otros posibles errores
+
+        } catch (Exception e) {
             System.err.println("ERROR CRÍTICO en Servicio (Exception Genérica) al marcar el chat para solicitud " + solicitudIdRelacionada + " como evaluado: " + e.getMessage());
-            e.printStackTrace();
+
         }
     }
     /**
@@ -137,16 +120,30 @@ public class EvaluacionServiceImpl implements EvaluacionService {
     @Override
     public List<Evaluacion> getEvaluacionesByTrabajadorId(String trabajadorId) {
         try {
-            return db.collection("evaluaciones")
+            List<QueryDocumentSnapshot> docs = db.collection("evaluaciones")
                     .whereEqualTo("trabajadorId", trabajadorId)
-                    .get().get().getDocuments()
-                    .stream()
-                    .map(doc -> {
-                        Evaluacion ev = doc.toObject(Evaluacion.class);
-                        ev.setId(doc.getId());
-                        return ev;
-                    })
-                    .collect(Collectors.toList());
+                    .get().get().getDocuments();
+
+            List<Evaluacion> evaluaciones = new ArrayList<>();
+
+            for (QueryDocumentSnapshot doc : docs) {
+                Evaluacion ev = doc.toObject(Evaluacion.class);
+                ev.setId(doc.getId());
+
+                // Obtener el nombre del cliente desde la colección correspondiente
+                String clienteId = ev.getClienteId();
+                DocumentSnapshot clienteDoc = db.collection("usuarios").document(clienteId).get().get();
+                if (clienteDoc.exists() && clienteDoc.contains("nombre")) {
+                    ev.setNombreCliente(clienteDoc.getString("nombre"));
+                } else {
+                    ev.setNombreCliente("Desconocido");
+                }
+
+                evaluaciones.add(ev);
+            }
+
+            return evaluaciones;
+
         } catch (Exception e) {
             throw new PresentationException("Error al obtener valoraciones", HttpStatus.INTERNAL_SERVER_ERROR);
         }

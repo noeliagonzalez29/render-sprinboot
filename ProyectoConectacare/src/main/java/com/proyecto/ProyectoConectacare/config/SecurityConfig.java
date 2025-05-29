@@ -57,25 +57,23 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Configuración CORS (asumiendo que tienes un bean CorsConfigurationSource)
+                // Configuración CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
                 // Configuración CSRF
                 .csrf(csrf -> csrf.disable())
-
                 // Configuración de sesión
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // AÑADE CSP AQUÍ ↓
+                //CSP
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives(
                                         "default-src 'self'; " +
-                                                "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com; https://cdn.jsdelivr.net;" +
+                                                "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://cdn.jsdelivr.net;" +
                                                 "style-src 'self' 'unsafe-inline'; " +
                                                 "img-src 'self' data: https://firebasestorage.googleapis.com; " + // Firebase Storage
-                                                "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://proyectoconectacare.firebaseio.com;  wss://proyectoconectacare.firebaseio.com;" + // Firestore y Auth
+                                                "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://proyectoconectacare.firebaseio.com  wss://proyectoconectacare.firebaseio.com;" + // Firestore y Auth
                                                 "frame-src https://securetoken.googleapis.com;" // Para OAuth de Google
                                 )
                         )
@@ -94,10 +92,8 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").authenticated()
                         .anyRequest().authenticated()
                 )
-
                 // Añadir filtro personalizado
                 .addFilterBefore(firebaseFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 
