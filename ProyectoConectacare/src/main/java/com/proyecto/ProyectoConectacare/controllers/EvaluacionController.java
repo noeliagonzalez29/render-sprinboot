@@ -3,6 +3,7 @@ package com.proyecto.ProyectoConectacare.controllers;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.proyecto.ProyectoConectacare.dto.EvaluacionDTO;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Evaluacion;
 import com.proyecto.ProyectoConectacare.model.Solicitud;
@@ -89,7 +90,7 @@ public class EvaluacionController {
      * @return: una lista de evaluaciones asociadas con el trabajador especificado.
      */
     @GetMapping("/trabajador/{trabajadorId}")
-    public List<Evaluacion> obtenerEvaluacionesTrabajador(@PathVariable String trabajadorId) {
+    public List<EvaluacionDTO> obtenerEvaluacionesTrabajador(@PathVariable String trabajadorId) {
         return evaluacionService.getEvaluacionesByTrabajadorId(trabajadorId);
     }
     /**
@@ -101,7 +102,7 @@ public class EvaluacionController {
      * @throws: PresentationException si el token no es válido o no está autorizado
      */
     @GetMapping("/mias")
-    public ResponseEntity<List<Evaluacion>> obtenerMisEvaluaciones(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<List<EvaluacionDTO>> obtenerMisEvaluaciones(@RequestHeader("Authorization") String token) {
         try {
             if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
@@ -109,7 +110,7 @@ public class EvaluacionController {
             FirebaseToken decoded = firebaseAuth.verifyIdToken(token);
             String trabajadorId = decoded.getUid();
 
-            List<Evaluacion> evaluaciones = evaluacionService.getEvaluacionesByTrabajadorId(trabajadorId);
+            List<EvaluacionDTO> evaluaciones = evaluacionService.getEvaluacionesByTrabajadorId(trabajadorId);
             return new ResponseEntity<>(evaluaciones, HttpStatus.OK);
         } catch (FirebaseAuthException e) {
             throw new PresentationException("Token inválido", HttpStatus.UNAUTHORIZED);
