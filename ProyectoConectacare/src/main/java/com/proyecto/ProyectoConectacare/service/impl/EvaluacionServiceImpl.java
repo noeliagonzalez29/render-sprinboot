@@ -1,6 +1,7 @@
 package com.proyecto.ProyectoConectacare.service.impl;
 
 import com.google.cloud.firestore.*;
+import com.proyecto.ProyectoConectacare.dto.EvaluacionDTO;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Evaluacion;
 import com.proyecto.ProyectoConectacare.model.Usuario;
@@ -118,31 +119,34 @@ public class EvaluacionServiceImpl implements EvaluacionService {
      * @throws: PresentationException si se produce un error durante el proceso de recuperación.
      */
     @Override
-    public List<Evaluacion> getEvaluacionesByTrabajadorId(String trabajadorId) {
+    public List<EvaluacionDTO> getEvaluacionesByTrabajadorId(String trabajadorId) {
         try {
             List<QueryDocumentSnapshot> docs = db.collection("evaluaciones")
                     .whereEqualTo("trabajadorId", trabajadorId)
                     .get().get().getDocuments();
 
-            List<Evaluacion> evaluaciones = new ArrayList<>();
+            List<EvaluacionDTO> evaluacionesDTO = new ArrayList<>();
 
             for (QueryDocumentSnapshot doc : docs) {
                 Evaluacion ev = doc.toObject(Evaluacion.class);
-                ev.setId(doc.getId());
-
-                // Obtener el nombre del cliente desde la colección correspondiente
                 String clienteId = ev.getClienteId();
-                DocumentSnapshot clienteDoc = db.collection("usuarios").document(clienteId).get().get();
-                if (clienteDoc.exists() && clienteDoc.contains("nombre")) {
-                    ev.setNombreCliente(clienteDoc.getString("nombre"));
-                } else {
-                    ev.setNombreCliente("Desconocido");
-                }
 
-                evaluaciones.add(ev);
+                DocumentSnapshot clienteDoc = db.collection("usuarios").document(clienteId).get().get();
+                String nombreCliente = clienteDoc.exists() && clienteDoc.contains("nombre")
+                        ? clienteDoc.getString("nombre")
+                        : "Desconocido";
+
+                EvaluacionDTO dto = new EvaluacionDTO();
+                dto.setId(doc.getId());
+                dto.setComentario(ev.getComentario());
+                dto.setEstrellas(ev.getEstrellas());
+                dto.setFechaEvaluacion(ev.getFechaEvaluacion());
+                dto.setNombreCliente(nombreCliente);
+
+                evaluacionesDTO.add(dto);
             }
 
-            return evaluaciones;
+            return evaluacionesDTO;
 
         } catch (Exception e) {
             throw new PresentationException("Error al obtener valoraciones", HttpStatus.INTERNAL_SERVER_ERROR);
