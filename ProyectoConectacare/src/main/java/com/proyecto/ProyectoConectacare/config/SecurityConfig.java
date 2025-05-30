@@ -89,6 +89,7 @@ public class SecurityConfig {
                                 "/swagger-ui.html"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/usuarios/email-existe").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/evaluaciones/media").permitAll()
                         .requestMatchers("/admin/**").authenticated()
                         .anyRequest().authenticated()
                 )

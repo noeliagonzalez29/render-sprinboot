@@ -67,9 +67,8 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
     );
 
     // Rutas específicas y sus métodos que deben ser públicos para ESTE FILTRO
-    private static final String RUTA_VERIFICAR_EMAIL = "/usuarios/email-existe"; // Asume que está bajo el context path /api si tienes uno global
-
-    // Rutas de creación de perfil (SÍ necesitan token de Firebase, pero el usuario puede no existir aún en BD local)
+    private static final String RUTA_VERIFICAR_EMAIL = "/usuarios/email-existe";
+    private static final String RUTA_EVALUACION_MEDIA = "/evaluaciones/media";
     private static final String RUTA_REGISTRO_CLIENTE = "/usuarios/cliente";
     private static final String RUTA_REGISTRO_TRABAJADOR = "/usuarios/trabajador";
 
@@ -107,7 +106,7 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
         try {
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
             String uid = decodedToken.getUid();
-            String emailFromToken = decodedToken.getEmail(); // Email del token
+            String emailFromToken = decodedToken.getEmail();
 
             // Poner información del token en el request para los controladores
             request.setAttribute("firebaseUserId", uid);
@@ -121,13 +120,10 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
 
             if (esRutaDeCreacionDePerfil) {
                 logger.debug("Ruta de creación de perfil detectada para UID: {}. Token de Firebase es válido. No se busca en BD local aún.");
-                // Para la creación de perfil, solo necesitamos que el token de Firebase sea válido.
-                // El controlador se encargará de crear el usuario en la BD local.
-                // Creamos una autenticación simple con el UID. El rol se asignará en el controlador.
+
                 authToken = new UsernamePasswordAuthenticationToken(uid, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_PRE_REGISTRO"))); // Un rol temporal o específico
             } else {
-                // Para todas las OTRAS RUTAS AUTENTICADAS, el usuario DEBE existir en nuestra BD local
-                // y tener un rol definido.
+
                 Optional<Usuario> optUsuario = Optional.ofNullable(usuarioService.getUsuarioById(uid));
                 if (optUsuario.isEmpty()) {
                     logger.warn("Token de Firebase válido para UID: {} pero usuario no encontrado en BD local para ruta: {} {}");
@@ -166,6 +162,9 @@ public class FirebaseFiltroAutenticacion extends OncePerRequestFilter {
     private boolean esRutaPublica(String path, String method) {
         // Ruta de verificación de email
         if (RUTA_VERIFICAR_EMAIL.equals(path) && "GET".equalsIgnoreCase(method)) {
+            return true;
+        }
+        if (RUTA_EVALUACION_MEDIA.equals(path) && "GET".equalsIgnoreCase(method)) {
             return true;
         }
         // Prefijos generales (Swagger, etc.)
