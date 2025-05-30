@@ -57,7 +57,6 @@ public class Usuario {
     @NotNull(message = "El rol es obligatorio")
     private Rol rol;
 
-    // Campos opcionales según el tipo de usuario:
     // Para Cliente:
     private String direccion;
     private List<String> necesidades;

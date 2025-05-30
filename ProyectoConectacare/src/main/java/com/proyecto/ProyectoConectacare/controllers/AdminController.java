@@ -3,6 +3,8 @@ package com.proyecto.ProyectoConectacare.controllers;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.UserRecord;
+import com.proyecto.ProyectoConectacare.dto.UsuarioCreadAdmDTO;
 import com.proyecto.ProyectoConectacare.exception.PresentationException;
 import com.proyecto.ProyectoConectacare.model.Rol;
 import com.proyecto.ProyectoConectacare.model.Usuario;
@@ -163,8 +165,8 @@ public class AdminController {
             throw new PresentationException("Token de autorización ausente o mal formado", HttpStatus.UNAUTHORIZED);
         }
         token = token.substring(7);
-        FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token); // Lanza FirebaseAuthException
-        Usuario usuarioActual = usuarioService.getUsuarioById(decodedToken.getUid()); // Lanza PresentationException
+        FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
+        Usuario usuarioActual = usuarioService.getUsuarioById(decodedToken.getUid());
 
         if (usuarioActual.getRol() != Rol.ADMINISTRADOR) {
             logger.warn("Intento de acceso no autorizado a descarga CSV por usuario: {}", usuarioActual.getEmail());
@@ -179,17 +181,14 @@ public class AdminController {
             logger.info("Obtenidos {} usuarios para incluir en el CSV (byte[]).", usuarios.size());
         } catch (PresentationException e) {
             logger.error("Error (PresentationException) al obtener la lista de usuarios para el CSV: {}", e.getMessage(), e);
-            throw e; // Dejar que el manejador global cree la respuesta de error JSON
+            throw e;
         } catch (Exception e) {
             logger.error("Error inesperado al obtener usuarios para CSV: {}", e.getMessage(), e);
             throw new PresentationException("Error interno al obtener datos de usuarios.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // 3. Generar los bytes del CSV llamando al método del servicio
-        byte[] csvBytes;
         try {
-            // Asume que tienes un método generarCSVBytes en AdminService que devuelve byte[]
-            // y maneja internamente la escritura en memoria (incluyendo el BOM)
+
             adminService.generarCSVBytes(usuarios);
             logger.info("Bytes del CSV generados correctamente ({} bytes).");
         } catch (PresentationException e) {
@@ -201,11 +200,9 @@ public class AdminController {
             throw new PresentationException("Error inesperado al generar el informe CSV.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // 4. Preparar Encabezados HTTP --> ¡Este paso es OBLIGATORIO!
+        // 4. Preparar Encabezados HTTP
         HttpHeaders headers = new HttpHeaders();
-        // Tipo de contenido para CSV con UTF-8
         headers.setContentType(MediaType.parseMediaType("text/csv; charset=UTF-8"));
-        // Sugerir descarga con nombre de archivo
         String fechaActual = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String nombreArchivo = String.format("estadisticas_usuarios_%s.csv", fechaActual);
         headers.setContentDispositionFormData("attachment", nombreArchivo);
@@ -213,9 +210,39 @@ public class AdminController {
         logger.debug("Encabezados HTTP para descarga CSV (byte[]) configurados.");
 
 
-        // 5. Construir y devolver ResponseEntity
-        // Se devuelve el array de bytes como cuerpo y los encabezados configurados.
         return new ResponseEntity<>( headers, HttpStatus.OK);
     }
+@PostMapping("crear-usuario")
+public ResponseEntity<Usuario> crearUsuario( @RequestBody UsuarioCreadAdmDTO usuarioNuevoDTO,
+                                             @RequestHeader("Authorization") String token)throws FirebaseAuthException{
 
+    if (token.startsWith("Bearer ")) {
+        token = token.substring(7);
+    }
+
+    FirebaseToken decodedToken = firebaseAuth.verifyIdToken(token);
+    Usuario usuarioActual = usuarioService.getUsuarioById(decodedToken.getUid());
+
+    if (usuarioActual == null || usuarioActual.getRol() != Rol.ADMINISTRADOR) {
+        throw new PresentationException("Acceso denegado", HttpStatus.FORBIDDEN);
+    }
+
+
+    UserRecord.CreateRequest request = new UserRecord.CreateRequest()
+            .setEmail(usuarioNuevoDTO.getEmail())
+            .setPassword(usuarioNuevoDTO.getPassword());
+
+    UserRecord userRecord = firebaseAuth.createUser(request);
+
+
+    Usuario nuevoUsuario = new Usuario();
+    nuevoUsuario.setId(userRecord.getUid());
+    nuevoUsuario.setEmail(usuarioNuevoDTO.getEmail());
+    nuevoUsuario.setNombre(usuarioNuevoDTO.getNombre());
+    nuevoUsuario.setRol(usuarioNuevoDTO.getRol());
+
+    usuarioService.createUsuario(nuevoUsuario);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(nuevoUsuario);
+}
 }
