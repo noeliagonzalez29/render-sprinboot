@@ -178,4 +178,38 @@ public class EvaluacionServiceImpl implements EvaluacionService {
         }
     }
 
+    @Override
+    public Map<String, Object> getValoracionMedia() {
+        List<Evaluacion> todasLasEvaluaciones = this.getAllEvaluaciones(); // Reutilizamos el método que ya tienes
+
+        Map<String, Object> resultado = new HashMap<>();
+
+        if (todasLasEvaluaciones == null || todasLasEvaluaciones.isEmpty()) {
+            resultado.put("mediaEstrellas", 0.0); // O null si prefieres, pero 0.0 es más seguro para el cálculo en front
+            resultado.put("totalValoraciones", 0);
+            return resultado;
+        }
+
+        double sumaEstrellas = 0;
+        for (Evaluacion evaluacion : todasLasEvaluaciones) {
+            // Es importante asegurarse que 'estrellas' no sea null si es un Integer o int primitivo.
+            // Si 'estrellas' en tu clase Evaluacion es un 'int', no puede ser null.
+            // Si es 'Integer', podría ser null y necesitarías un chequeo.
+            // Por la imagen, parece ser un `int` o `Integer` no nulo.
+            sumaEstrellas += evaluacion.getEstrellas();
+        }
+
+        double media = sumaEstrellas / todasLasEvaluaciones.size();
+
+        // Formatear la media a uno o dos decimales si es necesario (opcional aquí, se puede hacer en front)
+        // double mediaFormateada = Math.round(media * 10.0) / 10.0; // Un decimal
+        // double mediaFormateada = Math.round(media * 100.0) / 100.0; // Dos decimales
+
+        resultado.put("mediaEstrellas", media); // Usamos la media sin formatear aquí
+        resultado.put("totalValoraciones", todasLasEvaluaciones.size());
+
+        return resultado;
+
+    }
+
 }

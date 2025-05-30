@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Este controlador gestiona las solicitudes HTTP relacionadas con la gestión de las entidades "Evaluación".
@@ -121,5 +122,22 @@ public class EvaluacionController {
         boolean evaluada = evaluacionService.existeEvaluacionPorSolicitud(solicitudId);
         return ResponseEntity.ok(evaluada);
     }
-
+    @GetMapping("/media")
+    public ResponseEntity<Map<String, Object>> obtenerValoracionMediaGlobal() {
+        try {
+            Map<String, Object> mediaGlobal = evaluacionService.getValoracionMedia();
+            return ResponseEntity.ok(mediaGlobal);
+        } catch (PresentationException e) {
+            System.err.println("Error en controller al obtener media global: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(e.getHttpStatus() != null ? e.getHttpStatus() : HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", true, "message", e.getMessage()));
+        } catch (Exception e) {
+            // Captura genérica para cualquier otro error inesperado
+            System.err.println("Error inesperado en controller al obtener media global: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", true, "message", "Error interno al procesar la solicitud"));
+        }
+    }
 }

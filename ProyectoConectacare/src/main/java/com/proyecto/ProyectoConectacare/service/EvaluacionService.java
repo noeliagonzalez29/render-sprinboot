@@ -5,6 +5,7 @@ import com.proyecto.ProyectoConectacare.model.Evaluacion;
 
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * La interfaz EvaluacionService define las operaciones para gestionar y recuperar entidades "Evaluación".
@@ -17,4 +18,5 @@ public interface EvaluacionService {
     List<EvaluacionDTO> getEvaluacionesByTrabajadorId(String trabajadorId);
     boolean existeEvaluacionPorSolicitud(String solicitudId);
     List<Evaluacion> getAllEvaluaciones();
+    Map<String, Object> getValoracionMedia();
 }
