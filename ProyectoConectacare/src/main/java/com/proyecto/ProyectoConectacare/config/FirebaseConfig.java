@@ -68,7 +68,7 @@ public class FirebaseConfig {
         }
         // 3. para desarrollo local (archivo JSON)
         else {
-            Resource resource = new ClassPathResource("proyectoconectacare-firebase-adminsdk-fbsvc-9394117754.json");
+            Resource resource = new ClassPathResource("proyectoconectacare-firebase-adminsdk-fbsvc-c324b2f151.json");
             InputStream serviceAccount = resource.getInputStream();
 
             FirebaseOptions options = FirebaseOptions.builder()

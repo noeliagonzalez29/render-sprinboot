@@ -73,7 +73,7 @@ public class SecurityConfig {
                                                 "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://cdn.jsdelivr.net;" +
                                                 "style-src 'self' 'unsafe-inline'; " +
                                                 "img-src 'self' data: https://firebasestorage.googleapis.com; " + // Firebase Storage
-                                                "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://proyectoconectacare.firebaseio.com  wss://proyectoconectacare.firebaseio.com;" + // Firestore y Auth
+                                                "connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://proyectoconectacare.firebaseio.com  wss://proyectoconectacare.firebaseio.com;" +
                                                 "frame-src https://securetoken.googleapis.com;" // Para OAuth de Google
                                 )
                         )
